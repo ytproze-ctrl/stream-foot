@@ -1,203 +1,69 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stream Foot - Pseudo et règlement</title>
-<style>
-:root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;}
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#fff;display:flex;flex-direction:column;align-items:center;padding:20px;}
-.site{width:100%;max-width:1000px;}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.logo{font-weight:800;color:#fff;font-size:20px;}
-.viewer{opacity:0.9;}
-.layout{display:flex;gap:12px;}
-.video-col{flex:1;}
-.panel{background:var(--panel);border:2px solid var(--accent);padding:10px;border-radius:8px;}
-.video-box{position:relative;height:420px;border-radius:6px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;}
-video{width:100%;height:100%;object-fit:contain;background:#000;}
-.expand-btn{position:absolute;top:10px;right:10px;background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;}
-.note{margin-top:8px;background:var(--accent);padding:8px;border-radius:6px;text-align:center;font-weight:700;}
-.chat-col{width:320px;display:flex;flex-direction:column;gap:10px;}
-.messages{height:360px;overflow:auto;background:#051018;padding:8px;border-radius:6px;}
-.msg{padding:6px;border-bottom:1px solid rgba(255,255,255,0.03);}
-.msg .nick{font-weight:700;}
-.input-row{display:flex;gap:8px;}
-input[type=text]{flex:1;padding:8px;border-radius:6px;border:none;}
-button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;}
-.rules{font-size:13px;opacity:0.9;}
-.small{font-size:13px;opacity:0.8;}
-#userInfo{margin-bottom:8px;font-size:14px;}
-#loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
-#loginOverlay input{padding:10px;border-radius:6px;border:none;margin-bottom:10px;width:200px;}
-#loginOverlay label{display:flex;align-items:center;gap:5px;margin-bottom:10px;}
-#loginOverlay button{padding:10px 20px;border-radius:6px;border:none;background:#c62828;color:#fff;cursor:pointer;}
-</style>
-</head>
-<body>
+<div class="chat-col">
+  <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong>Chat</strong>
+      <span class="small">Modos: 0</span>
+    </div>
 
-<div id="loginOverlay">
-  <h2>Connectez-vous et acceptez le règlement</h2>
-  <input type="text" id="pseudoInput" placeholder="Pseudo Discord" maxlength="24">
-  <label><input type="checkbox" id="agreeRules"> J’accepte le règlement</label>
-  <button id="loginBtn">Continuer</button>
-</div>
+    <div id="messages" class="messages" aria-live="polite"></div>
 
-<div class="site" style="display:none;">
-<header>
-  <div class="logo">Stream Foot</div>
-  <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
-</header>
+    <form id="chatForm" class="chat-form" onsubmit="return false;">
+      <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" maxlength="24" />
+      <input id="msg" type="text" placeholder="Message..." />
+      <button id="sendBtn">Envoyer</button>
+    </form>
 
-<div id="userInfo"></div>
-
-<div class="layout">
-  <div class="video-col">
-    <div class="panel">
-      <div class="video-box" id="videoBox">
-        <video id="player" controls playsinline preload="metadata" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
-        <button id="expandBtn" class="expand-btn">Agrandir</button>
-      </div>
-      <div class="note">Flux unique — agrandissez la vidéo</div>
+    <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
+      <div style="font-weight:700;margin-bottom:6px">Règlement</div>
+      <ol>
+        <li>Pas d'insultes (mots remplacés par des étoiles)</li>
+        <li>10s entre chaque message</li>
+        <li>Respectez les autres</li>
+      </ol>
     </div>
   </div>
-
-  <div class="chat-col">
-    <div class="panel" style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Chat</strong>
-        <span class="small">Modos: 0</span>
-      </div>
-
-      <div id="messages" class="messages" aria-live="polite"></div>
-
-      <form id="chatForm" class="chat-form" onsubmit="return false;">
-        <input id="nick" type="text" value="" maxlength="24">
-        <input id="msg" type="text" placeholder="Message...">
-        <button id="sendBtn">Envoyer</button>
-      </form>
-
-      <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
-        <div style="font-weight:700;margin-bottom:6px">Règlement</div>
-        <ol>
-          <li>Pas d'insultes (mots remplacés par des étoiles)</li>
-          <li>10s entre chaque message</li>
-          <li>Respectez les autres</li>
-        </ol>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
 </div>
 
 <script>
-// Login local avec règlement
-const loginOverlay = document.getElementById('loginOverlay');
-const loginBtn = document.getElementById('loginBtn');
-const pseudoInput = document.getElementById('pseudoInput');
-const agreeRules = document.getElementById('agreeRules');
-const siteDiv = document.querySelector('.site');
-const userInfo = document.getElementById('userInfo');
-const nickInput = document.getElementById('nick');
-
-loginBtn.addEventListener('click', ()=>{
-  const pseudo = pseudoInput.value.trim() || 'Anonyme';
-  if(!agreeRules.checked){
-    alert("Vous devez accepter le règlement pour continuer !");
-    return;
-  }
-  localStorage.setItem('pseudoDiscord', pseudo);
-  localStorage.setItem('rulesAccepted','true');
-  initSite(pseudo);
-});
-
-function initSite(pseudo){
-  loginOverlay.style.display='none';
-  siteDiv.style.display='block';
-  userInfo.textContent = `Connecté : ${pseudo}`;
-  nickInput.value = pseudo;
-  startViewers();
-}
-
-// Vérifier si pseudo déjà stocké et règlement accepté
-const storedPseudo = localStorage.getItem('pseudoDiscord');
-const rulesAccepted = localStorage.getItem('rulesAccepted');
-if(storedPseudo && rulesAccepted==='true') initSite(storedPseudo);
-
-// Chat local
+// DOM
 const messagesEl = document.getElementById('messages');
 const sendBtn = document.getElementById('sendBtn');
 const msgInput = document.getElementById('msg');
+const nickInput = document.getElementById('nick');
 
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]);}
+// Fonction pour échapper HTML
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]);
+}
 
-function addMessage(nick,text){
+// Fonction pour ajouter un message dans la chat box
+function addMessage(nick, text){
   const div = document.createElement('div');
   div.className = 'msg';
-  div.innerHTML = '<div class="nick">'+escapeHtml(nick)+'</div><div>'+escapeHtml(text)+'</div>';
+  div.innerHTML = '<div class="nick">'+escapeHtml(nick)+'</div><div class="text">'+escapeHtml(text)+'</div>';
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-sendBtn.addEventListener('click',()=>{
-  const nick = nickInput.value.trim() || 'Anonyme';
-  const text = msgInput.value.trim();
-  if(!text) return;
-  addMessage(nick,text);
-  msgInput.value='';
+// Gestion du clic sur "Envoyer"
+sendBtn.addEventListener('click', () => {
+  const nick = (nickInput.value||'').trim() || 'Anonyme';
+  const text = (msgInput.value||'').trim();
+  if (!text) return;
+  addMessage(nick, text);
+  msgInput.value = '';
   msgInput.focus();
 });
 
-msgInput.addEventListener('keypress',e=>{
-  if(e.key==='Enter'){
+// Envoi avec touche Entrée
+msgInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
     e.preventDefault();
     sendBtn.click();
   }
 });
-
-// Video expand
-const expandBtn = document.getElementById('expandBtn');
-const player = document.getElementById('player');
-expandBtn.addEventListener('click', async () => {
-  const box = document.getElementById('videoBox');
-  if (!document.fullscreenElement) {
-    if (box.requestFullscreen) await box.requestFullscreen();
-    else if (box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
-    expandBtn.textContent = 'Réduire';
-  } else {
-    if (document.exitFullscreen) await document.exitFullscreen();
-    expandBtn.textContent = 'Agrandir';
-  }
-});
-
-// Compteur de viewers local
-const viewerCountEl = document.getElementById('viewerCount');
-const TAB_ID = Math.random().toString(36).substr(2,9);
-
-function startViewers(){
-  function updateViewers(){
-    let tabs = JSON.parse(localStorage.getItem('activeTabs')||'{}');
-    tabs[TAB_ID]=Date.now();
-    const now = Date.now();
-    Object.keys(tabs).forEach(k=>{if(now-tabs[k]>10000) delete tabs[k];});
-    localStorage.setItem('activeTabs',JSON.stringify(tabs));
-    viewerCountEl.textContent = Object.keys(tabs).length;
-  }
-  updateViewers();
-  setInterval(updateViewers,2000);
-  window.addEventListener('storage', ()=>updateViewers());
-  window.addEventListener('beforeunload', ()=>{
-    let tabs = JSON.parse(localStorage.getItem('activeTabs')||'{}');
-    delete tabs[TAB_ID];
-    localStorage.setItem('activeTabs',JSON.stringify(tabs));
-  });
-}
 </script>
 
-</body>
-</html>
 
 
 
