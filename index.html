@@ -56,6 +56,13 @@
 
           <div id="messages" class="messages" aria-live="polite"></div>
 
+             <form id="chatForm" class="chat-form" onsubmit="return false;">
+            <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" maxlength="24" />
+            <input id="msg" type="text" placeholder="Message..." />
+            <button id="sendBtn">Envoyer</button>
+          </form>
+
+
        <script>
 // Récupération des éléments
 const sendBtn = document.getElementById('sendBtn');
