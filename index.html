@@ -29,19 +29,59 @@
     .small{font-size:13px;opacity:0.8}
     /* Popup pseudo/reglement */
     #overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1000}
-    #overlay .box{background:#111;padding:20px;border-radius:8px;width:320px;text-align:center}
+    #overlay .box{background:#111;padding:20px;border-radius:8px;width:360px;text-align:center;max-height:90%;overflow:auto}
     #overlay input[type=text]{width:90%;margin-bottom:10px}
     #overlay button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#fff;cursor:pointer;margin-top:10px}
+    #overlay .rules-box{background:#111;border:1px solid #c62828;padding:8px;border-radius:6px;text-align:left;max-height:200px;overflow:auto;margin-bottom:10px}
   </style>
 </head>
 <body>
   <div id="overlay">
     <div class="box">
-      <h3>Bienvenue sur Stream Foot</h3>
+      <h3>Bienvenue sur Stream Foot ⚽️</h3>
       <p>Entrez votre pseudo :</p>
       <input id="userNick" type="text" placeholder="Pseudo" />
-      <p><input type="checkbox" id="acceptRules" /> J'accepte le règlement</p>
-      <button id="startBtn">Entrer</button>
+
+      <div class="rules-box">
+        <strong>🚨⚽️ Règlement – Stream Foot ⚽️🚨</strong>
+        <p>Bienvenue sur Stream Foot, communauté bénévole dédiée à la diffusion de matchs de football. Merci de lire et respecter ce règlement 👇</p>
+        <ul>
+          <li>🔰 <strong>Principes</strong>
+            <ul>
+              <li>Nous agissons bénévolement : le staff n’est pas toujours disponible, merci de votre patience.</li>
+              <li>Le but est de partager la passion du foot dans le respect et la bonne humeur.</li>
+            </ul>
+          </li>
+          <li>👥 <strong>Respect</strong>
+            <ul>
+              <li>Aucune insulte, provocation ou discrimination ne sera tolérée.</li>
+              <li>Pas de spam, pub, arnaque ou vente.</li>
+              <li>Les décisions du staff doivent être respectées.</li>
+            </ul>
+          </li>
+          <li>🎥 <strong>Diffusion</strong>
+            <ul>
+              <li>Les diffuseurs doivent avoir une bonne qualité d’image, de son et de connexion.</li>
+              <li>Les plannings peuvent varier selon la disponibilité des bénévoles.</li>
+              <li>Pour devenir diffuseur, contactez le staff.</li>
+            </ul>
+          </li>
+          <li>💬 <strong>Entraide</strong>
+            <ul>
+              <li>Merci d’aider les autres et de garder une attitude positive et respectueuse.</li>
+            </ul>
+          </li>
+          <li>⚠️ <strong>Sanctions</strong>
+            <ul>
+              <li>Tout manquement peut entraîner avertissement, expulsion ou bannissement.</li>
+            </ul>
+          </li>
+        </ul>
+        <p>Merci à tous pour votre respect, patience et passion du football ❤️⚽</p>
+      </div>
+
+      <p><input type="checkbox" id="acceptRules" /> J'ai lu et j'accepte le règlement</p>
+      <button id="startBtn" disabled>Entrer</button>
     </div>
   </div>
 
@@ -74,15 +114,6 @@
             <input id="msg" type="text" placeholder="Message..." />
             <button id="sendBtn" class="send">Envoyer</button>
           </form>
-
-          <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
-            <div style="font-weight:700;margin-bottom:6px">Règlement</div>
-            <ol>
-              <li>Pas d'insultes (mots remplacés par des étoiles)</li>
-              <li>10s entre chaque message</li>
-              <li>Respectez les autres</li>
-            </ol>
-          </div>
         </div>
       </div>
     </div>
@@ -101,19 +132,19 @@
       return out;
     }
 
-    // pseudo + règlement
     const overlay = document.getElementById('overlay');
     const startBtn = document.getElementById('startBtn');
     const userNickInput = document.getElementById('userNick');
     const acceptRules = document.getElementById('acceptRules');
     const site = document.querySelector('.site');
 
+    // Active le bouton seulement si la checkbox est cochée
+    acceptRules.addEventListener('change', ()=>{
+      startBtn.disabled = !acceptRules.checked;
+    });
+
     startBtn.addEventListener('click', () => {
       const nick = userNickInput.value.trim() || 'Anonyme';
-      if (!acceptRules.checked){
-        alert("Vous devez accepter le règlement !");
-        return;
-      }
       localStorage.setItem('sf_nick', nick);
       overlay.style.display = 'none';
       site.style.display = 'block';
@@ -129,12 +160,11 @@
       const msgInput = document.getElementById('msg');
       const sendBtn = document.getElementById('sendBtn');
 
-      // init chat messages from localStorage
       const chatKey = 'sf_chat';
       const lastResetKey = 'sf_last_reset';
       const now = Date.now();
       const lastReset = Number(localStorage.getItem(lastResetKey)||0);
-      if(now - lastReset > 2*60*60*1000){ // 2h
+      if(now - lastReset > 2*60*60*1000){ 
         localStorage.setItem(chatKey, JSON.stringify([]));
         localStorage.setItem(lastResetKey, now);
       }
@@ -175,16 +205,14 @@
         render();
       });
 
-      // compteur simple (nombre de pages ouvertes dans la session)
+      // compteur simple par session
       const viewerCountEl = document.getElementById('viewerCount');
       let viewers = Number(sessionStorage.getItem('sf_viewers')||0);
       viewers++;
       sessionStorage.setItem('sf_viewers', viewers);
       viewerCountEl.textContent = viewers;
 
-      // video expand
       const expandBtn = document.getElementById('expandBtn');
-      const player = document.getElementById('player');
       const box = document.getElementById('videoBox');
       expandBtn.addEventListener('click', async () => {
         if(!document.fullscreenElement){
@@ -199,4 +227,5 @@
   </script>
 </body>
 </html>
+
 
