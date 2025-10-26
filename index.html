@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stream Foot - Pseudo et règlement</title>
+<title>Stream Foot - Connexion locale</title>
 <style>
 :root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;}
 body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#fff;display:flex;flex-direction:column;align-items:center;padding:20px;}
@@ -23,22 +23,51 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
 .msg{padding:6px;border-bottom:1px solid rgba(255,255,255,0.03);}
 .msg .nick{font-weight:700;}
 .input-row{display:flex;gap:8px;}
-input[type=text]{flex:1;padding:8px;border-radius:6px;border:none;}
-button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;}
+input[type=text], input[type=password]{flex:1;padding:8px;border-radius:6px;border:none;}
+button.send, #sendBtn, #loginBtn{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;}
 .rules{font-size:13px;opacity:0.9;}
 .small{font-size:13px;opacity:0.8;}
 #userInfo{margin-bottom:8px;font-size:14px;}
-#loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+#loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;overflow:auto;padding:20px;}
 #loginOverlay input{padding:10px;border-radius:6px;border:none;margin-bottom:10px;width:200px;}
 #loginOverlay label{display:flex;align-items:center;gap:5px;margin-bottom:10px;}
-#loginOverlay button{padding:10px 20px;border-radius:6px;border:none;background:#c62828;color:#fff;cursor:pointer;}
+#loginOverlay .rulesText{background:#051018;border:1px solid #c62828;border-radius:6px;padding:10px;margin-bottom:10px;max-height:300px;overflow:auto;font-size:14px;}
 </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-  <h2>Connectez-vous et acceptez le règlement</h2>
-  <input type="text" id="pseudoInput" placeholder="Pseudo Discord" maxlength="24">
+  <h2>Connexion au site</h2>
+  <input type="text" id="pseudoInput" placeholder="Pseudo" maxlength="24">
+  <input type="password" id="passwordInput" placeholder="Mot de passe (optionnel)">
+  
+  <div class="rulesText">
+🚨⚽️ <strong>Règlement – Stream Foot</strong> ⚽️🚨<br><br>
+Bienvenue sur Stream Foot, communauté bénévole dédiée à la diffusion de matchs de football. Merci de lire et respecter ce règlement 👇<br><br>
+
+🔰 <strong>1. Principes</strong><br>
+• Nous agissons bénévolement : le staff n’est pas toujours disponible, merci de votre patience.<br>
+• Le but est de partager la passion du foot dans le respect et la bonne humeur.<br><br>
+
+👥 <strong>2. Respect</strong><br>
+• Aucune insulte, provocation ou discrimination ne sera tolérée.<br>
+• Pas de spam, pub, arnaque ou vente.<br>
+• Les décisions du staff doivent être respectées.<br><br>
+
+🎥 <strong>3. Diffusion</strong><br>
+• Les diffuseurs doivent avoir une bonne qualité d’image, de son et de connexion.<br>
+• Les plannings peuvent varier selon la disponibilité des bénévoles.<br>
+• Pour devenir diffuseur, contactez le staff.<br><br>
+
+💬 <strong>4. Entraide</strong><br>
+• Merci d’aider les autres et de garder une attitude positive et respectueuse.<br><br>
+
+⚠️ <strong>5. Sanctions</strong><br>
+• Tout manquement peut entraîner avertissement, expulsion ou bannissement.<br><br>
+
+Merci à tous pour votre respect, patience et passion du football ❤️⚽
+  </div>
+
   <label><input type="checkbox" id="agreeRules"> J’accepte le règlement</label>
   <button id="loginBtn">Continuer</button>
 </div>
@@ -76,15 +105,6 @@ button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;bord
         <input id="msg" type="text" placeholder="Message...">
         <button id="sendBtn">Envoyer</button>
       </form>
-
-      <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
-        <div style="font-weight:700;margin-bottom:6px">Règlement</div>
-        <ol>
-          <li>Pas d'insultes (mots remplacés par des étoiles)</li>
-          <li>10s entre chaque message</li>
-          <li>Respectez les autres</li>
-        </ol>
-      </div>
     </div>
   </div>
 </div>
@@ -93,10 +113,11 @@ button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;bord
 </div>
 
 <script>
-// Login local avec règlement
+// Connexion locale + acceptation du règlement
 const loginOverlay = document.getElementById('loginOverlay');
 const loginBtn = document.getElementById('loginBtn');
 const pseudoInput = document.getElementById('pseudoInput');
+const passwordInput = document.getElementById('passwordInput');
 const agreeRules = document.getElementById('agreeRules');
 const siteDiv = document.querySelector('.site');
 const userInfo = document.getElementById('userInfo');
@@ -104,8 +125,15 @@ const nickInput = document.getElementById('nick');
 
 loginBtn.addEventListener('click', ()=>{
   const pseudo = pseudoInput.value.trim() || 'Anonyme';
+  const pwd = passwordInput.value; // pour vérification simple si voulu
   if(!agreeRules.checked){
     alert("Vous devez accepter le règlement pour continuer !");
+    return;
+  }
+  // Option : mot de passe simple (non sécurisé)
+  const expectedPwd = "1234"; // exemple
+  if(pwd && pwd !== expectedPwd){
+    alert("Mot de passe incorrect !");
     return;
   }
   localStorage.setItem('pseudoDiscord', pseudo);
@@ -198,5 +226,6 @@ function startViewers(){
 
 </body>
 </html>
+
 
 
