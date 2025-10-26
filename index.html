@@ -24,7 +24,7 @@
     .msg .nick{font-weight:700}
     .input-row{display:flex;gap:8px}
     input[type=text]{flex:1;padding:8px;border-radius:6px;border:none}
-    button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
+    button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
     .rules{font-size:13px;opacity:0.9}
     .small{font-size:13px;opacity:0.8}
   </style>
@@ -51,86 +51,17 @@
         <div class="panel" style="display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <strong>Chat</strong>
-            <span class="small">Modos: <span id="modCount">0</span></span>
+            <span class="small">Modos: 0</span>
           </div>
 
           <div id="messages" class="messages" aria-live="polite"></div>
 
-             <form id="chatForm" class="chat-form" onsubmit="return false;">
+          <!-- FORMULAIRE CHAT LOCAL FONCTIONNEL -->
+          <form id="chatForm" class="chat-form" onsubmit="return false;">
             <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" maxlength="24" />
             <input id="msg" type="text" placeholder="Message..." />
             <button id="sendBtn">Envoyer</button>
           </form>
-
-
-       <script>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Chat en direct</title>
-<style>
-  #chatBox { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px; background: #f9f9f9;}
-  #chatBox li { padding: 5px; border-bottom: 1px solid #ddd; cursor: pointer;}
-</style>
-</head>
-<body>
-
-<ul id="chatBox"></ul>
-
-<form id="chatForm" class="input-row" onsubmit="return false;">
-  <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" />
-  <input id="msg" type="text" placeholder="Message..." />
-  <button id="sendBtn" class="send">Envoyer</button>
-</form>
-
-<script>
-// Récupération des éléments
-const sendBtn = document.getElementById('sendBtn');
-const nickInput = document.getElementById('nick');
-const msgInput = document.getElementById('msg');
-const chatBox = document.getElementById('chatBox');
-
-// Fonction pour afficher un message dans le chat
-function addMessage(nick, msg) {
-  const li = document.createElement('li');
-  li.textContent = `${nick}: ${msg}`;
-  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
-  chatBox.appendChild(li);
-  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
-}
-
-// Fonction pour envoyer le message
-function sendMessage() {
-  const nick = nickInput.value.trim() || 'Anonyme';
-  const msg = msgInput.value.trim();
-  if (!msg) return;
-  addMessage(nick, msg);
-  msgInput.value = '';
-  msgInput.focus();
-}
-
-// Bouton "Envoyer"
-sendBtn.addEventListener('click', e => {
-  e.preventDefault();
-  sendMessage();
-});
-
-// Touche Entrée
-msgInput.addEventListener('keypress', e => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-</script>
-
-</body>
-</html>
-
-         
-</script>
-
 
           <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
             <div style="font-weight:700;margin-bottom:6px">Règlement</div>
@@ -147,127 +78,55 @@ msgInput.addEventListener('keypress', e => {
     <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
   </div>
 
-  <!-- Firebase (compat) CDN: remplacez ensuite la config dans firebaseConfig -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
+  <!-- SCRIPT CHAT LOCAL -->
   <script>
-    // ---------- CONFIGURATION ----------
-    // Remplacez par votre config Firebase (Project settings -> SDK Web)
-    const firebaseConfig = {
-      apiKey: "VOTRE_APIKEY",
-      authDomain: "VOTRE_AUTHDOMAIN",
-      databaseURL: "VOTRE_DATABASE_URL",
-      projectId: "VOTRE_PROJECTID",
-      storageBucket: "VOTRE_STORAGEBUCKET",
-      messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-      appId: "VOTRE_APPID"
-    };
+  const messagesEl = document.getElementById('messages');
+  const sendBtn = document.getElementById('sendBtn');
+  const msgInput = document.getElementById('msg');
+  const nickInput = document.getElementById('nick');
 
-    // ---------- INIT ----------
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]);
+  }
 
-    // ---------- UTIL ----------
-    const BAN_WORDS = ['putain','con','salope','nique','connard'];
-    function censor(text){
-      let out = text;
-      BAN_WORDS.forEach(w => {
-        const re = new RegExp(w, 'ig');
-        out = out.replace(re, m => '*'.repeat(m.length));
-      });
-      return out;
+  function addMessage(nick, text){
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = '<div class="nick">'+escapeHtml(nick)+'</div><div class="text">'+escapeHtml(text)+'</div>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  sendBtn.addEventListener('click', () => {
+    const nick = (nickInput.value||'').trim() || 'Anonyme';
+    const text = (msgInput.value||'').trim();
+    if (!text) return;
+    addMessage(nick, text);
+    msgInput.value = '';
+    msgInput.focus();
+  });
+
+  msgInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendBtn.click();
     }
+  });
 
-    // presence id
-    const uid = 'u_' + Math.random().toString(36).slice(2,9);
-
-    // DOM
-    const messagesEl = document.getElementById('messages');
-    const sendBtn = document.getElementById('sendBtn');
-    const msgInput = document.getElementById('msg');
-    const nickInput = document.getElementById('nick');
-    const viewerCountEl = document.getElementById('viewerCount');
-    const modCountEl = document.getElementById('modCount');
-
-    // presence
-    const presenceRef = db.ref('presence/' + uid);
-    presenceRef.set({nick: nickInput.value, ts: Date.now()});
-    presenceRef.onDisconnect().remove();
-
-    // update viewer count
-    const presRoot = db.ref('presence');
-    presRoot.on('value', snap => {
-      const v = snap.val() || {};
-      viewerCountEl.textContent = Object.keys(v).length;
-    });
-
-    // load messages
-    const msgsRef = db.ref('messages');
-    msgsRef.limitToLast(200).on('value', snap => {
-      const v = snap.val() || {};
-      messagesEl.innerHTML = '';
-      Object.keys(v).sort((a,b) => (v[a].ts||0)-(v[b].ts||0)).forEach(key => {
-        const m = v[key];
-        const div = document.createElement('div');
-        div.className = 'msg';
-        div.innerHTML = '<div class="nick">'+escapeHtml(m.nick||'Anonyme')+' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div><div class="text">'+escapeHtml(m.text||'')+'</div>';
-        messagesEl.appendChild(div);
-      });
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    });
-
-    // moderators count
-    const modsRef = db.ref('moderators');
-    modsRef.on('value', snap => {
-      const v = snap.val() || {};
-      modCountEl.textContent = Object.keys(v).length;
-    });
-
-    // send handling with 10s cooldown local
-    let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
-    sendBtn.addEventListener('click', async () => {
-      const now = Date.now();
-      if (now - lastMsgTs < 10000) {
-        alert('Veuillez attendre 10 secondes entre chaque message.');
-        return;
-      }
-      const nick = (nickInput.value||'').trim() || 'Anonyme';
-      const text = (msgInput.value||'').trim();
-      if (!text) return;
-      const cens = censor(text);
-      await db.ref('messages').push({nick, text: cens, ts: Date.now()});
-      lastMsgTs = Date.now();
-      localStorage.setItem('sf_last_msg', String(lastMsgTs));
-      msgInput.value = '';
-    });
-
-    // helpers
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];});
+  // VIDEO EXPAND
+  const expandBtn = document.getElementById('expandBtn');
+  const player = document.getElementById('player');
+  expandBtn.addEventListener('click', async () => {
+    const box = document.getElementById('videoBox');
+    if (!document.fullscreenElement) {
+      if (box.requestFullscreen) await box.requestFullscreen();
+      else if (box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
+      expandBtn.textContent = 'Réduire';
+    } else {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      expandBtn.textContent = 'Agrandir';
     }
-
-    // video expand (toggle fullscreen if available)
-    const expandBtn = document.getElementById('expandBtn');
-    const player = document.getElementById('player');
-    expandBtn.addEventListener('click', async () => {
-      // try fullscreen
-      const box = document.getElementById('videoBox');
-      if (!document.fullscreenElement) {
-        if (box.requestFullscreen) await box.requestFullscreen();
-        else if (box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
-        expandBtn.textContent = 'Réduire';
-      } else {
-        if (document.exitFullscreen) await document.exitFullscreen();
-        expandBtn.textContent = 'Agrandir';
-      }
-    });
-
-    // update presence nick when changed
-    nickInput.addEventListener('change', () => {
-      presenceRef.set({nick: nickInput.value||'Anonyme', ts: Date.now()});
-    });
-
+  });
   </script>
 </body>
 </html>
