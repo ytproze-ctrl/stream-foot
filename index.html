@@ -201,3 +201,45 @@
   </script>
 </body>
 </html>
+
+// load messages
+const msgsRef = db.ref('messages');
+msgsRef.limitToLast(200).on('value', snap => {
+  const v = snap.val() || {};
+  messagesEl.innerHTML = ''; // Nettoie les anciens messages
+  Object.keys(v).sort((a,b) => (v[a].ts||0)-(v[b].ts||0)).forEach(key => {
+    const msg = v[key];
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<span class="nick">${msg.nick || 'Anonyme'}</span>: ${censor(msg.text || '')}`;
+    messagesEl.appendChild(div);
+  });
+  messagesEl.scrollTop = messagesEl.scrollHeight; // Fait défiler vers le bas
+});
+
+// send message
+function sendMessage() {
+  const nick = nickInput.value.trim();
+  const msg = msgInput.value.trim();
+  if (!msg || !nick) return;
+
+  const msgData = {
+    nick: nick,
+    text: msg,
+    ts: Date.now()
+  };
+
+  // Ajoute le message à la base de données
+  msgsRef.push(msgData);
+
+  // Vide le champ de message
+  msgInput.value = '';
+}
+
+sendBtn.onclick = sendMessage;
+msgInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    sendMessage();
+  }
+});
+
