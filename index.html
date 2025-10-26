@@ -1,39 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stream Foot - Simple</title>
-<style>
-:root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;--muted:#9aa4ad}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;display:flex;min-height:100vh;align-items:flex-start;justify-content:center;padding:20px}
-
-/* Login Discord */
-#loginContainer{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  height:100vh;
-  width:100%;
-  background:var(--bg);
-  position:fixed;
-  top:0;
-  left:0;
-  z-index:99999;
-}
-#loginContainer h2{margin-bottom:12px;font-weight:700;text-align:center;}
-#discordLoginBtn{
-  padding:10px 20px;
-  border:none;
-  border-radius:6px;
-  background:var(--accent);
-  color:#fff;
-  cursor:pointer;
-  font-weight:700;
-  margin-top:10px;
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -50,173 +21,10 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<script>
-// ---------- CONFIG ----------
-const firebaseConfig = {
-  apiKey: "VOTRE_APIKEY",
-  authDomain: "VOTRE_AUTHDOMAIN",
-  databaseURL: "VOTRE_DATABASE_URL",
-  projectId: "VOTRE_PROJECTID",
-  storageBucket: "VOTRE_STORAGEBUCKET",
-  messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-  appId: "VOTRE_APPID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// ---------- UTIL ----------
-const BAN_WORDS=['putain','con','salope','nique','connard'];
-function censor(text){let out=text;BAN_WORDS.forEach(w=>{const re=new RegExp(w,'ig');out=out.replace(re,m=>'*'.repeat(m.length));});return out;}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));}
-
-// ---------- DISCORD LOGIN ----------
-const discordLoginBtn = document.getElementById('discordLoginBtn');
-discordLoginBtn.addEventListener('click', ()=>{
-  const clientId = 'VOTRE_CLIENT_ID';
-  const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-  const scope = encodeURIComponent('identify');
-  window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-});
-
-function getDiscordToken(){
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  return params.get('access_token');
-}
-
-async function fetchDiscordUser(token){
-  const res = await fetch('https://discord.com/api/users/@me',{ headers:{Authorization:'Bearer '+token}});
-  return res.json();
-}
-
-// ---------- INIT SITE AFTER LOGIN ----------
-(async ()=>{
-  const token = getDiscordToken();
-  if(!token) return; // rester sur login si pas connecté
-  const user = await fetchDiscordUser(token);
-
-  // Masquer login
-  document.getElementById('loginContainer').style.display='none';
-
-  // Injecter HTML du site
-  const siteContainer = document.getElementById('siteContainer');
-  siteContainer.innerHTML = `
-  <div class="site">
-    <header>
-      <div class="logo">Stream Foot - Simple</div>
-      <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
-    </header>
-    <div class="layout" style="display:flex;gap:12px">
-      <div class="video-col" style="flex:1">
-        <div class="panel" style="background:var(--panel);border:2px solid var(--accent);padding:10px;border-radius:8px">
-          <div class="video-box" id="videoBox" style="position:relative;height:420px;border-radius:6px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center">
-            <video id="player" controls playsinline preload="metadata" src="https://www.w3schools.com/html/mov_bbb.mp4" style="width:100%;height:100%;object-fit:contain;background:#000"></video>
-            <button id="expandBtn" class="expand-btn" style="position:absolute;top:10px;right:10px;background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;z-index:10">Agrandir</button>
-          </div>
-          <div class="note" style="margin-top:8px;background:var(--accent);padding:8px;border-radius:6px;text-align:center;font-weight:700">Flux unique — agrandissez la vidéo</div>
-        </div>
-      </div>
-
-      <div class="chat-col" style="width:320px;display:flex;flex-direction:column;gap:10px">
-        <div class="panel" style="display:flex;flex-direction:column;gap:8px;background:var(--panel);border-radius:8px;padding:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Chat</strong>
-            <span class="small">Modos: <span id="modCount">0</span></span>
-          </div>
-          <div id="messages" class="messages" style="height:360px;overflow:auto;background:#051018;padding:8px;border-radius:6px" aria-live="polite"></div>
-          <form id="chatForm" class="input-row" onsubmit="return false;" style="display:flex;gap:8px">
-            <input id="nick" type="text" value="${user.username}" placeholder="Pseudo" style="flex:1;padding:8px;border-radius:6px;border:none"/>
-            <input id="msg" type="text" placeholder="Message..." style="flex:2;padding:8px;border-radius:6px;border:none"/>
-            <button id="sendBtn" class="send" style="background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer">Envoyer</button>
-          </form>
-          <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04);font-size:13px;opacity:0.9;margin-top:8px">
-            <div style="font-weight:700;margin-bottom:6px">Règlement</div>
-            <ol>
-              <li>Pas d'insultes (mots remplacés par des étoiles)</li>
-              <li>10s entre chaque message</li>
-              <li>Respectez les autres</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
-    <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
-  </div>
-  `;
-
-  // ---------- CHAT + PRESENCE ----------
-  const uid='u_'+Math.random().toString(36).slice(2,9);
-  const presenceRef=db.ref('presence/'+uid);
-  const nickInput = document.getElementById('nick');
-  const msgInput = document.getElementById('msg');
-  const sendBtn = document.getElementById('sendBtn');
-  const messagesEl = document.getElementById('messages');
-  const viewerCountEl = document.getElementById('viewerCount');
-  const modCountEl = document.getElementById('modCount');
-
-  presenceRef.set({nick:user.username,ts:Date.now()});
-  presenceRef.onDisconnect().remove();
-
-  db.ref('presence').on('value', snap=>{
-    const v = snap.val()||{};
-    viewerCountEl.textContent = Object.keys(v).length;
-  });
-
-  db.ref('messages').limitToLast(200).on('value', snap=>{
-    const v = snap.val()||{};
-    messagesEl.innerHTML='';
-    Object.keys(v).sort((a,b)=>(v[a].ts||0)-(v[b].ts||0)).forEach(key=>{
-      const m=v[key];
-      const div=document.createElement('div');
-      div.className='msg';
-      div.innerHTML='<div class="nick">'+escapeHtml(m.nick||'Anonyme')+
-        ' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div>'+
-        '<div class="text">'+escapeHtml(m.text||'')+'</div>';
-      messagesEl.appendChild(div);
-    });
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  });
-
-  db.ref('moderators').on('value', snap=>{
-    const v=snap.val()||{};
-    modCountEl.textContent=Object.keys(v).length;
-  });
-
-  let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
-  sendBtn.addEventListener('click', async ()=>{
-    const now = Date.now();
-    if(now-lastMsgTs<10000){alert('Veuillez attendre 10 secondes entre chaque message.'); return;}
-    const nick = nickInput.value.trim()||'Anonyme';
-    const text = msgInput.value.trim();
-    if(!text) return;
-    const cens = censor(text);
-    await db.ref('messages').push({nick,text:cens,ts:Date.now()});
-    lastMsgTs = Date.now();
-    localStorage.setItem('sf_last_msg',String(lastMsgTs));
-    msgInput.value='';
-  });
-
-  nickInput.addEventListener('change',()=>{presenceRef.set({nick:nickInput.value||'Anonyme',ts:Date.now()});});
-
-  // ---------- VIDEO EXPAND ----------
-  const expandBtn = document.getElementById('expandBtn');
-  const player = document.getElementById('player');
-  expandBtn.addEventListener('click', async ()=>{
-    const box=document.getElementById('videoBox');
-    if(!document.fullscreenElement){
-      if(box.requestFullscreen) await box.requestFullscreen();
-      else if(box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
-      expandBtn.textContent='Réduire';
-    } else {
-      if(document.exitFullscreen) await document.exitFullscreen();
-      expandBtn.textContent='Agrandir';
-    }
-  });
-})();
-</script>
-
+<script src="js/main.js"></script>
 </body>
 </html>
+
 
 
 
