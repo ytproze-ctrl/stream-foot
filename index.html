@@ -27,9 +27,20 @@
     button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
     .rules{font-size:13px;opacity:0.9}
     .small{font-size:13px;opacity:0.8}
+
+    /* Login Discord */
+    #loginContainer{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100%;background:var(--bg);position:fixed;top:0;left:0;z-index:1000;}
+    #loginContainer h2{margin-bottom:12px;font-weight:700;}
+    #discordLoginBtn{padding:10px 20px;border:none;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer;font-weight:700;margin-top:10px;}
   </style>
 </head>
 <body>
+  <!-- Login Discord -->
+  <div id="loginContainer">
+    <h2>Connectez-vous avec Discord pour accéder au chat</h2>
+    <button id="discordLoginBtn">Se connecter avec Discord</button>
+  </div>
+
   <div class="site">
     <header>
       <div class="logo">Stream Foot - Simple</div>
@@ -77,13 +88,12 @@
     <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
   </div>
 
-  <!-- Firebase (compat) CDN: remplacez ensuite la config dans firebaseConfig -->
+  <!-- Firebase (compat) CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <script>
     // ---------- CONFIGURATION ----------
-    // Remplacez par votre config Firebase (Project settings -> SDK Web)
     const firebaseConfig = {
       apiKey: "VOTRE_APIKEY",
       authDomain: "VOTRE_AUTHDOMAIN",
@@ -93,8 +103,6 @@
       messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
       appId: "VOTRE_APPID"
     };
-
-    // ---------- INIT ----------
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -108,11 +116,11 @@
       });
       return out;
     }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    }
 
-    // presence id
-    const uid = 'u_' + Math.random().toString(36).slice(2,9);
-
-    // DOM
+    // ---------- DOM ----------
     const messagesEl = document.getElementById('messages');
     const sendBtn = document.getElementById('sendBtn');
     const msgInput = document.getElementById('msg');
@@ -120,82 +128,115 @@
     const viewerCountEl = document.getElementById('viewerCount');
     const modCountEl = document.getElementById('modCount');
 
-    // presence
+    // ---------- PRESENCE ----------
+    const uid = 'u_' + Math.random().toString(36).slice(2,9);
     const presenceRef = db.ref('presence/' + uid);
-    presenceRef.set({nick: nickInput.value, ts: Date.now()});
-    presenceRef.onDisconnect().remove();
 
-    // update viewer count
-    const presRoot = db.ref('presence');
-    presRoot.on('value', snap => {
-      const v = snap.val() || {};
-      viewerCountEl.textContent = Object.keys(v).length;
+    // ---------- AUTHENTIFICATION DISCORD ----------
+    const discordLoginBtn = document.getElementById('discordLoginBtn');
+    discordLoginBtn.addEventListener('click', ()=>{
+      const clientId = 'VOTRE_CLIENT_ID';
+      const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
+      const scope = encodeURIComponent('identify');
+      window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
     });
 
-    // load messages
-    const msgsRef = db.ref('messages');
-    msgsRef.limitToLast(200).on('value', snap => {
-      const v = snap.val() || {};
-      messagesEl.innerHTML = '';
-      Object.keys(v).sort((a,b) => (v[a].ts||0)-(v[b].ts||0)).forEach(key => {
-        const m = v[key];
-        const div = document.createElement('div');
-        div.className = 'msg';
-        div.innerHTML = '<div class="nick">'+escapeHtml(m.nick||'Anonyme')+' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div><div class="text">'+escapeHtml(m.text||'')+'</div>';
-        messagesEl.appendChild(div);
-      });
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    });
-
-    // moderators count
-    const modsRef = db.ref('moderators');
-    modsRef.on('value', snap => {
-      const v = snap.val() || {};
-      modCountEl.textContent = Object.keys(v).length;
-    });
-
-    // send handling with 10s cooldown local
-    let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
-    sendBtn.addEventListener('click', async () => {
-      const now = Date.now();
-      if (now - lastMsgTs < 10000) {
-        alert('Veuillez attendre 10 secondes entre chaque message.');
-        return;
-      }
-      const nick = (nickInput.value||'').trim() || 'Anonyme';
-      const text = (msgInput.value||'').trim();
-      if (!text) return;
-      const cens = censor(text);
-      await db.ref('messages').push({nick, text: cens, ts: Date.now()});
-      lastMsgTs = Date.now();
-      localStorage.setItem('sf_last_msg', String(lastMsgTs));
-      msgInput.value = '';
-    });
-
-    // helpers
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];});
+    function getDiscordToken(){
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      return params.get('access_token');
     }
 
-    // video expand (toggle fullscreen if available)
+    async function fetchDiscordUser(token){
+      const res = await fetch('https://discord.com/api/users/@me', {
+        headers:{Authorization:'Bearer '+token}
+      });
+      return res.json();
+    }
+
+    (async ()=>{
+      const token = getDiscordToken();
+      if(token){
+        const user = await fetchDiscordUser(token);
+        nickInput.value = user.username;
+
+        // cacher login et afficher site
+        document.getElementById('loginContainer').style.display = 'none';
+        document.querySelector('.site').style.display = 'block';
+
+        // mettre à jour présence
+        presenceRef.set({nick: user.username, ts: Date.now()});
+        presenceRef.onDisconnect().remove();
+
+        // compteur viewers en temps réel
+        const presRoot = db.ref('presence');
+        presRoot.on('value', snap=>{
+          const v = snap.val()||{};
+          viewerCountEl.textContent = Object.keys(v).length;
+        });
+
+        // load messages
+        const msgsRef = db.ref('messages');
+        msgsRef.limitToLast(200).on('value', snap=>{
+          const v = snap.val()||{};
+          messagesEl.innerHTML = '';
+          Object.keys(v).sort((a,b)=>(v[a].ts||0)-(v[b].ts||0)).forEach(key=>{
+            const m = v[key];
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.innerHTML = '<div class="nick">'+escapeHtml(m.nick||'Anonyme')+
+              ' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div>'+
+              '<div class="text">'+escapeHtml(m.text||'')+'</div>';
+            messagesEl.appendChild(div);
+          });
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        });
+
+        // moderators count
+        const modsRef = db.ref('moderators');
+        modsRef.on('value', snap=>{
+          const v = snap.val()||{};
+          modCountEl.textContent = Object.keys(v).length;
+        });
+
+        // send messages
+        let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
+        sendBtn.addEventListener('click', async ()=>{
+          const now = Date.now();
+          if(now-lastMsgTs<10000){alert('Veuillez attendre 10 secondes entre chaque message.'); return;}
+          const nick = nickInput.value.trim()||'Anonyme';
+          const text = msgInput.value.trim();
+          if(!text) return;
+          const cens = censor(text);
+          await db.ref('messages').push({nick,text:cens,ts:Date.now()});
+          lastMsgTs = Date.now();
+          localStorage.setItem('sf_last_msg',String(lastMsgTs));
+          msgInput.value = '';
+        });
+
+        // update presence nick if changed
+        nickInput.addEventListener('change', ()=>{
+          presenceRef.set({nick:nickInput.value||'Anonyme',ts:Date.now()});
+        });
+
+      } else {
+        document.querySelector('.site').style.display = 'none';
+      }
+    })();
+
+    // video expand
     const expandBtn = document.getElementById('expandBtn');
     const player = document.getElementById('player');
-    expandBtn.addEventListener('click', async () => {
-      // try fullscreen
+    expandBtn.addEventListener('click', async ()=>{
       const box = document.getElementById('videoBox');
-      if (!document.fullscreenElement) {
-        if (box.requestFullscreen) await box.requestFullscreen();
-        else if (box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
-        expandBtn.textContent = 'Réduire';
-      } else {
-        if (document.exitFullscreen) await document.exitFullscreen();
-        expandBtn.textContent = 'Agrandir';
+      if(!document.fullscreenElement){
+        if(box.requestFullscreen) await box.requestFullscreen();
+        else if(box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
+        expandBtn.textContent='Réduire';
+      } else{
+        if(document.exitFullscreen) await document.exitFullscreen();
+        expandBtn.textContent='Agrandir';
       }
-    });
-
-    // update presence nick when changed
-    nickInput.addEventListener('change', () => {
-      presenceRef.set({nick: nickInput.value||'Anonyme', ts: Date.now()});
     });
 
   </script>
