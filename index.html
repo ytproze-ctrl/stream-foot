@@ -34,6 +34,12 @@
     #overlay button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#fff;cursor:pointer;margin-top:10px}
     #overlay .rules-box{background:#111;border:1px solid #c62828;padding:8px;border-radius:6px;text-align:left;max-height:200px;overflow:auto;margin-bottom:10px}
     #streamLink{display:inline-block;background:#c62828;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:20px}
+
+    /* Notifications toast */
+    #notifications { position: fixed; top: 20px; right: 20px; width: 250px; z-index: 9999; }
+    .toast { background: #c62828; color: #fff; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; opacity: 0.9; animation: slideIn 0.5s, fadeOut 0.5s 3s forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes fadeOut { to { opacity:0; transform: translateX(100%); } }
   </style>
 </head>
 <body>
@@ -122,6 +128,9 @@
     <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
   </div>
 
+  <!-- Notifications container -->
+  <div id="notifications"></div>
+
   <script>
     const BAN_WORDS = ['putain','con','salope','nique','connard'];
     function censor(text){
@@ -138,12 +147,25 @@
     const userNickInput = document.getElementById('userNick');
     const acceptRules = document.getElementById('acceptRules');
     const site = document.querySelector('.site');
+    const notifications = document.getElementById('notifications');
+
+    function showToast(message){
+      const div = document.createElement('div');
+      div.className = 'toast';
+      div.textContent = message;
+      notifications.appendChild(div);
+      setTimeout(()=>{ div.remove(); }, 3500);
+    }
+
+    function userJoined(nick){
+      showToast(`${nick} a rejoint le flux ⚽️`);
+    }
 
     acceptRules.addEventListener('change', ()=>{
       startBtn.disabled = !acceptRules.checked;
     });
 
-    startBtn.addEventListener('click', () => {
+    startBtn.addEventListener('click', ()=>{
       const nick = userNickInput.value.trim() || 'Anonyme';
       localStorage.setItem('sf_nick', nick);
 
@@ -162,14 +184,15 @@
 
       document.getElementById('streamLink').addEventListener('click', e=>{
         e.preventDefault();
-        linkPanel.remove();
+        userJoined(nick); // notification défilante
         site.style.display='block';
+        linkPanel.remove();
         initChat();
       });
     });
 
     function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];});
+      return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
     }
 
     function initChat(){
@@ -230,7 +253,7 @@
 
       const expandBtn = document.getElementById('expandBtn');
       const box = document.getElementById('videoBox');
-      expandBtn.addEventListener('click', async () => {
+      expandBtn.addEventListener('click', async ()=>{
         if(!document.fullscreenElement){
           if(box.requestFullscreen) await box.requestFullscreen();
           expandBtn.textContent='Réduire';
@@ -243,5 +266,6 @@
   </script>
 </body>
 </html>
+
 
 
