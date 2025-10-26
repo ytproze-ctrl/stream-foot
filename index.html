@@ -33,6 +33,7 @@
     #overlay input[type=text]{width:90%;margin-bottom:10px}
     #overlay button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#fff;cursor:pointer;margin-top:10px}
     #overlay .rules-box{background:#111;border:1px solid #c62828;padding:8px;border-radius:6px;text-align:left;max-height:200px;overflow:auto;margin-bottom:10px}
+    #streamLink{display:inline-block;background:#c62828;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:20px}
   </style>
 </head>
 <body>
@@ -138,7 +139,6 @@
     const acceptRules = document.getElementById('acceptRules');
     const site = document.querySelector('.site');
 
-    // Active le bouton seulement si la checkbox est cochée
     acceptRules.addEventListener('change', ()=>{
       startBtn.disabled = !acceptRules.checked;
     });
@@ -146,9 +146,26 @@
     startBtn.addEventListener('click', () => {
       const nick = userNickInput.value.trim() || 'Anonyme';
       localStorage.setItem('sf_nick', nick);
+
       overlay.style.display = 'none';
-      site.style.display = 'block';
-      initChat();
+
+      // Affiche le lien vers le flux
+      const linkPanel = document.createElement('div');
+      linkPanel.style.textAlign='center';
+      linkPanel.style.marginTop='50px';
+      linkPanel.innerHTML = `
+        <h2>Bienvenue ${escapeHtml(nick)} ⚽️</h2>
+        <p>Cliquez ci-dessous pour accéder au flux en direct :</p>
+        <a href="#" id="streamLink">Accéder au flux en direct ⚽️</a>
+      `;
+      document.body.appendChild(linkPanel);
+
+      document.getElementById('streamLink').addEventListener('click', e=>{
+        e.preventDefault();
+        linkPanel.remove();
+        site.style.display='block';
+        initChat();
+      });
     });
 
     function escapeHtml(s){
@@ -164,7 +181,7 @@
       const lastResetKey = 'sf_last_reset';
       const now = Date.now();
       const lastReset = Number(localStorage.getItem(lastResetKey)||0);
-      if(now - lastReset > 2*60*60*1000){ 
+      if(now - lastReset > 2*60*60*1000){
         localStorage.setItem(chatKey, JSON.stringify([]));
         localStorage.setItem(lastResetKey, now);
       }
@@ -172,7 +189,7 @@
       let chat = JSON.parse(localStorage.getItem(chatKey)||'[]');
 
       function render(){
-        messagesEl.innerHTML = '';
+        messagesEl.innerHTML='';
         chat.forEach(m=>{
           const div = document.createElement('div');
           div.className='msg';
@@ -186,7 +203,7 @@
 
       let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
 
-      sendBtn.addEventListener('click', () => {
+      sendBtn.addEventListener('click', ()=>{
         const now = Date.now();
         if(now - lastMsgTs < 10000){
           alert('Veuillez attendre 10 secondes entre chaque message.');
@@ -196,16 +213,15 @@
         if(!text) return;
         const nick = localStorage.getItem('sf_nick')||'Anonyme';
         const cens = censor(text);
-        const m = {nick, text:cens, ts:now};
+        const m={nick,text:cens,ts:now};
         chat.push(m);
         localStorage.setItem(chatKey, JSON.stringify(chat));
         localStorage.setItem('sf_last_msg', now);
-        lastMsgTs = now;
+        lastMsgTs=now;
         msgInput.value='';
         render();
       });
 
-      // compteur simple par session
       const viewerCountEl = document.getElementById('viewerCount');
       let viewers = Number(sessionStorage.getItem('sf_viewers')||0);
       viewers++;
