@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stream Foot - Discord Login</title>
+<title>Stream Foot - Pseudo Discord Local</title>
 <style>
 :root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;}
 body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#fff;display:flex;flex-direction:column;align-items:center;padding:20px;}
@@ -28,17 +28,26 @@ button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;bord
 .rules{font-size:13px;opacity:0.9;}
 .small{font-size:13px;opacity:0.8;}
 #userInfo{margin-bottom:8px;font-size:14px;}
-a{color:#c62828;text-decoration:none;}
+#loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+#loginOverlay input{padding:10px;border-radius:6px;border:none;margin-bottom:10px;width:200px;}
+#loginOverlay button{padding:10px 20px;border-radius:6px;border:none;background:#c62828;color:#fff;cursor:pointer;}
 </style>
 </head>
 <body>
-<div class="site">
+
+<div id="loginOverlay">
+  <h2>Connectez-vous</h2>
+  <input type="text" id="pseudoInput" placeholder="Pseudo Discord" maxlength="24">
+  <button id="loginBtn">Se connecter</button>
+</div>
+
+<div class="site" style="display:none;">
 <header>
-  <div class="logo">Stream Foot - Discord Login</div>
+  <div class="logo">Stream Foot</div>
   <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
 </header>
 
-<div id="userInfo">Connexion en cours...</div>
+<div id="userInfo"></div>
 
 <div class="layout">
   <div class="video-col">
@@ -61,7 +70,7 @@ a{color:#c62828;text-decoration:none;}
       <div id="messages" class="messages" aria-live="polite"></div>
 
       <form id="chatForm" class="chat-form" onsubmit="return false;">
-        <input id="nick" type="text" value="Anonyme" maxlength="24">
+        <input id="nick" type="text" value="" maxlength="24">
         <input id="msg" type="text" placeholder="Message...">
         <button id="sendBtn">Envoyer</button>
       </form>
@@ -82,19 +91,36 @@ a{color:#c62828;text-decoration:none;}
 </div>
 
 <script>
-// Pseudo Discord
-fetch('/me')
-  .then(res=>res.json())
-  .then(user=>{
-    document.getElementById('userInfo').innerHTML = `Connecté : ${user.username}#${user.discriminator} <a href="/logout">(Déconnexion)</a>`;
-    document.getElementById('nick').value = user.username;
-  });
+// Login local
+const loginOverlay = document.getElementById('loginOverlay');
+const loginBtn = document.getElementById('loginBtn');
+const pseudoInput = document.getElementById('pseudoInput');
+const siteDiv = document.querySelector('.site');
+const userInfo = document.getElementById('userInfo');
+const nickInput = document.getElementById('nick');
+
+loginBtn.addEventListener('click', ()=>{
+  const pseudo = pseudoInput.value.trim() || 'Anonyme';
+  localStorage.setItem('pseudoDiscord', pseudo);
+  initSite(pseudo);
+});
+
+function initSite(pseudo){
+  loginOverlay.style.display='none';
+  siteDiv.style.display='block';
+  userInfo.textContent = `Connecté : ${pseudo}`;
+  nickInput.value = pseudo;
+  startViewers();
+}
+
+// Vérifier si pseudo déjà stocké
+const storedPseudo = localStorage.getItem('pseudoDiscord');
+if(storedPseudo) initSite(storedPseudo);
 
 // Chat local
 const messagesEl = document.getElementById('messages');
 const sendBtn = document.getElementById('sendBtn');
 const msgInput = document.getElementById('msg');
-const nickInput = document.getElementById('nick');
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]);}
 
@@ -137,30 +163,31 @@ expandBtn.addEventListener('click', async () => {
   }
 });
 
-// Compteur de viewers en temps réel (local)
+// Compteur de viewers local
 const viewerCountEl = document.getElementById('viewerCount');
 const TAB_ID = Math.random().toString(36).substr(2,9);
 
-function updateViewers() {
-  let tabs = JSON.parse(localStorage.getItem('activeTabs')||'{}');
-  tabs[TAB_ID] = Date.now();
-  const now = Date.now();
-  Object.keys(tabs).forEach(k => { if(now - tabs[k] > 10000) delete tabs[k]; });
-  localStorage.setItem('activeTabs', JSON.stringify(tabs));
-  viewerCountEl.textContent = Object.keys(tabs).length;
+function startViewers(){
+  function updateViewers(){
+    let tabs = JSON.parse(localStorage.getItem('activeTabs')||'{}');
+    tabs[TAB_ID]=Date.now();
+    const now = Date.now();
+    Object.keys(tabs).forEach(k=>{if(now-tabs[k]>10000) delete tabs[k];});
+    localStorage.setItem('activeTabs',JSON.stringify(tabs));
+    viewerCountEl.textContent = Object.keys(tabs).length;
+  }
+  updateViewers();
+  setInterval(updateViewers,2000);
+  window.addEventListener('storage', ()=>updateViewers());
+  window.addEventListener('beforeunload', ()=>{
+    let tabs = JSON.parse(localStorage.getItem('activeTabs')||'{}');
+    delete tabs[TAB_ID];
+    localStorage.setItem('activeTabs',JSON.stringify(tabs));
+  });
 }
-
-updateViewers();
-setInterval(updateViewers,2000);
-window.addEventListener('storage', ()=>updateViewers());
-window.addEventListener('beforeunload', ()=>{
-  let tabs = JSON.parse(localStorage.getItem('activeTabs')||'{}');
-  delete tabs[TAB_ID];
-  localStorage.setItem('activeTabs', JSON.stringify(tabs));
-});
 </script>
+
 </body>
 </html>
 
-</html>
 
