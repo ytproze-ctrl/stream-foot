@@ -97,6 +97,33 @@ msgInput.addEventListener('keypress', e => {
     sendMessage();
   }
 });
+         // Fonction pour afficher un message dans le chat
+function addMessage(nick, msg) {
+  const li = document.createElement('li');
+  li.textContent = `${nick}: ${msg}`;
+  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
+  chatBox.appendChild(li);
+  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
+}
+
+         // Fonction pour afficher un message dans le chat
+function addMessage(nick, msg) {
+  const li = document.createElement('li');
+  li.textContent = `${nick}: ${msg}`;
+  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
+  chatBox.appendChild(li);
+  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
+}
+
+         // Fonction pour afficher un message dans le chat
+function addMessage(nick, msg) {
+  const li = document.createElement('li');
+  li.textContent = `${nick}: ${msg}`;
+  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
+  chatBox.appendChild(li);
+  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
+}
+         
 </script>
 
 
