@@ -1,22 +1,27 @@
-# Stream Foot - Projet React (FR)
+    Stream Foot - Pack prêt à déployer
+    ==================================
 
-Contenu:
-- Interface de lecteur vidéo avec bouton Agrandir
-- Chat en temps réel via Firebase Realtime Database
-- Censure de mots (remplacés par étoiles)
-- Latence client: 10s entre messages
-- Présence (compteur de spectateurs)
-- Règlement affiché
-- Possibilité de modérateurs (via `moderators` dans la DB)
+    Contenu :
+    - index.html (site complet, chat à gauche, vidéo à droite)
+    - README avec instructions
 
-⚠️ Avant de lancer:
-1. Remplacez la configuration Firebase dans `src/firebaseConfig.js`.
-2. Créez un projet Firebase et activez Realtime Database.
-3. Pour tests seulement, vous pouvez ouvrir temporairement les règles de la DB.
-4. Installez les dépendances: `npm install`
-5. Lancez en local: `npm start`
+    Instructions rapides :
+    1) Créez un projet Firebase (console.firebase.google.com) et activez Realtime Database.
+    2) Dans Project settings -> SDK Web, copiez la config et remplacez la section `firebaseConfig`
+       dans le fichier `index.html` par vos valeurs.
+    3) Dans Realtime Database -> Règles, pour TEST uniquement (puis durcir) :
+       {
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}
+    4) Hébergez le fichier `index.html` (GitHub Pages, Netlify, ou autre).
 
-Pour améliorer la sécurité en production:
-- Utiliser Firebase Auth
-- Restreindre les règles Realtime Database
-- Gérer les grants de modération côté serveur (Cloud Functions)
+    Notes :
+    - Le champ "Source vidéo" permet de changer la source sans recharger la page.
+    - La censure est basique et configurable dans le tableau BAN_WORDS dans le code.
+    - Pour supprimer un message ou donner des droits de modération, utilisez la console Firebase :
+      créez un noeud `moderators` et ajoutez une clé (ex: `moderators/mod1: true`). Le nombre de modos
+      s'affichera automatiquement.
+    - Pour une sécurité réelle en production, ajoutez Firebase Auth et des règles strictes côté DB.
