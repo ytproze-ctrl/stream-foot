@@ -56,11 +56,42 @@
 
           <div id="messages" class="messages" aria-live="polite"></div>
 
-          <form id="chatForm" class="input-row" onsubmit="return false;">
-            <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" />
-            <input id="msg" type="text" placeholder="Message..." />
-            <button id="sendBtn" class="send">Envoyer</button>
-          </form>
+       <script>
+// Récupération des éléments
+const sendBtn = document.getElementById('sendBtn');
+const nickInput = document.getElementById('nick');
+const msgInput = document.getElementById('msg');
+const chatForm = document.getElementById('chatForm');
+
+// Fonction pour envoyer le message
+function sendMessage() {
+  const nick = nickInput.value.trim() || 'Anonyme';
+  const msg = msgInput.value.trim();
+  if (!msg) return;
+
+  // Ici tu peux envoyer le message via Socket.IO ou l'afficher dans le chat
+  console.log(`${nick}: ${msg}`); // Exemple simple
+  alert(`${nick}: ${msg}`); // Affiche un popup pour tester
+
+  msgInput.value = ''; // Vide le champ message
+  msgInput.focus();
+}
+
+// Clic sur le bouton "Envoyer"
+sendBtn.addEventListener('click', e => {
+  e.preventDefault(); // Empêche le formulaire de recharger la page
+  sendMessage();
+});
+
+// Envoi avec la touche "Entrée" dans le champ message
+msgInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+</script>
+
 
           <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
             <div style="font-weight:700;margin-bottom:6px">Règlement</div>
