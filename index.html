@@ -27,10 +27,25 @@
     button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
     .rules{font-size:13px;opacity:0.9}
     .small{font-size:13px;opacity:0.8}
+    /* Popup pseudo/reglement */
+    #overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1000}
+    #overlay .box{background:#111;padding:20px;border-radius:8px;width:320px;text-align:center}
+    #overlay input[type=text]{width:90%;margin-bottom:10px}
+    #overlay button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#fff;cursor:pointer;margin-top:10px}
   </style>
 </head>
 <body>
-  <div class="site">
+  <div id="overlay">
+    <div class="box">
+      <h3>Bienvenue sur Stream Foot</h3>
+      <p>Entrez votre pseudo :</p>
+      <input id="userNick" type="text" placeholder="Pseudo" />
+      <p><input type="checkbox" id="acceptRules" /> J'accepte le règlement</p>
+      <button id="startBtn">Entrer</button>
+    </div>
+  </div>
+
+  <div class="site" style="display:none">
     <header>
       <div class="logo">Stream Foot - Simple</div>
       <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
@@ -51,13 +66,11 @@
         <div class="panel" style="display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <strong>Chat</strong>
-            <span class="small">Modos: <span id="modCount">0</span></span>
           </div>
 
           <div id="messages" class="messages" aria-live="polite"></div>
 
           <form id="chatForm" class="input-row" onsubmit="return false;">
-            <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" />
             <input id="msg" type="text" placeholder="Message..." />
             <button id="sendBtn" class="send">Envoyer</button>
           </form>
@@ -77,28 +90,7 @@
     <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
   </div>
 
-  <!-- Firebase (compat) CDN: remplacez ensuite la config dans firebaseConfig -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
   <script>
-    // ---------- CONFIGURATION ----------
-    // Remplacez par votre config Firebase (Project settings -> SDK Web)
-    const firebaseConfig = {
-      apiKey: "VOTRE_APIKEY",
-      authDomain: "VOTRE_AUTHDOMAIN",
-      databaseURL: "VOTRE_DATABASE_URL",
-      projectId: "VOTRE_PROJECTID",
-      storageBucket: "VOTRE_STORAGEBUCKET",
-      messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-      appId: "VOTRE_APPID"
-    };
-
-    // ---------- INIT ----------
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // ---------- UTIL ----------
     const BAN_WORDS = ['putain','con','salope','nique','connard'];
     function censor(text){
       let out = text;
@@ -109,95 +101,102 @@
       return out;
     }
 
-    // presence id
-    const uid = 'u_' + Math.random().toString(36).slice(2,9);
+    // pseudo + règlement
+    const overlay = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
+    const userNickInput = document.getElementById('userNick');
+    const acceptRules = document.getElementById('acceptRules');
+    const site = document.querySelector('.site');
 
-    // DOM
-    const messagesEl = document.getElementById('messages');
-    const sendBtn = document.getElementById('sendBtn');
-    const msgInput = document.getElementById('msg');
-    const nickInput = document.getElementById('nick');
-    const viewerCountEl = document.getElementById('viewerCount');
-    const modCountEl = document.getElementById('modCount');
-
-    // presence
-    const presenceRef = db.ref('presence/' + uid);
-    presenceRef.set({nick: nickInput.value, ts: Date.now()});
-    presenceRef.onDisconnect().remove();
-
-    // update viewer count
-    const presRoot = db.ref('presence');
-    presRoot.on('value', snap => {
-      const v = snap.val() || {};
-      viewerCountEl.textContent = Object.keys(v).length;
-    });
-
-    // load messages
-    const msgsRef = db.ref('messages');
-    msgsRef.limitToLast(200).on('value', snap => {
-      const v = snap.val() || {};
-      messagesEl.innerHTML = '';
-      Object.keys(v).sort((a,b) => (v[a].ts||0)-(v[b].ts||0)).forEach(key => {
-        const m = v[key];
-        const div = document.createElement('div');
-        div.className = 'msg';
-        div.innerHTML = '<div class="nick">'+escapeHtml(m.nick||'Anonyme')+' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div><div class="text">'+escapeHtml(m.text||'')+'</div>';
-        messagesEl.appendChild(div);
-      });
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    });
-
-    // moderators count
-    const modsRef = db.ref('moderators');
-    modsRef.on('value', snap => {
-      const v = snap.val() || {};
-      modCountEl.textContent = Object.keys(v).length;
-    });
-
-    // send handling with 10s cooldown local
-    let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
-    sendBtn.addEventListener('click', async () => {
-      const now = Date.now();
-      if (now - lastMsgTs < 10000) {
-        alert('Veuillez attendre 10 secondes entre chaque message.');
+    startBtn.addEventListener('click', () => {
+      const nick = userNickInput.value.trim() || 'Anonyme';
+      if (!acceptRules.checked){
+        alert("Vous devez accepter le règlement !");
         return;
       }
-      const nick = (nickInput.value||'').trim() || 'Anonyme';
-      const text = (msgInput.value||'').trim();
-      if (!text) return;
-      const cens = censor(text);
-      await db.ref('messages').push({nick, text: cens, ts: Date.now()});
-      lastMsgTs = Date.now();
-      localStorage.setItem('sf_last_msg', String(lastMsgTs));
-      msgInput.value = '';
+      localStorage.setItem('sf_nick', nick);
+      overlay.style.display = 'none';
+      site.style.display = 'block';
+      initChat();
     });
 
-    // helpers
     function escapeHtml(s){
       return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];});
     }
 
-    // video expand (toggle fullscreen if available)
-    const expandBtn = document.getElementById('expandBtn');
-    const player = document.getElementById('player');
-    expandBtn.addEventListener('click', async () => {
-      // try fullscreen
-      const box = document.getElementById('videoBox');
-      if (!document.fullscreenElement) {
-        if (box.requestFullscreen) await box.requestFullscreen();
-        else if (box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
-        expandBtn.textContent = 'Réduire';
-      } else {
-        if (document.exitFullscreen) await document.exitFullscreen();
-        expandBtn.textContent = 'Agrandir';
+    function initChat(){
+      const messagesEl = document.getElementById('messages');
+      const msgInput = document.getElementById('msg');
+      const sendBtn = document.getElementById('sendBtn');
+
+      // init chat messages from localStorage
+      const chatKey = 'sf_chat';
+      const lastResetKey = 'sf_last_reset';
+      const now = Date.now();
+      const lastReset = Number(localStorage.getItem(lastResetKey)||0);
+      if(now - lastReset > 2*60*60*1000){ // 2h
+        localStorage.setItem(chatKey, JSON.stringify([]));
+        localStorage.setItem(lastResetKey, now);
       }
-    });
 
-    // update presence nick when changed
-    nickInput.addEventListener('change', () => {
-      presenceRef.set({nick: nickInput.value||'Anonyme', ts: Date.now()});
-    });
+      let chat = JSON.parse(localStorage.getItem(chatKey)||'[]');
 
+      function render(){
+        messagesEl.innerHTML = '';
+        chat.forEach(m=>{
+          const div = document.createElement('div');
+          div.className='msg';
+          div.innerHTML='<div class="nick">'+escapeHtml(m.nick)+' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts).toLocaleTimeString()+'</span></div><div class="text">'+escapeHtml(m.text)+'</div>';
+          messagesEl.appendChild(div);
+        });
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      render();
+
+      let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
+
+      sendBtn.addEventListener('click', () => {
+        const now = Date.now();
+        if(now - lastMsgTs < 10000){
+          alert('Veuillez attendre 10 secondes entre chaque message.');
+          return;
+        }
+        const text = msgInput.value.trim();
+        if(!text) return;
+        const nick = localStorage.getItem('sf_nick')||'Anonyme';
+        const cens = censor(text);
+        const m = {nick, text:cens, ts:now};
+        chat.push(m);
+        localStorage.setItem(chatKey, JSON.stringify(chat));
+        localStorage.setItem('sf_last_msg', now);
+        lastMsgTs = now;
+        msgInput.value='';
+        render();
+      });
+
+      // compteur simple (nombre de pages ouvertes dans la session)
+      const viewerCountEl = document.getElementById('viewerCount');
+      let viewers = Number(sessionStorage.getItem('sf_viewers')||0);
+      viewers++;
+      sessionStorage.setItem('sf_viewers', viewers);
+      viewerCountEl.textContent = viewers;
+
+      // video expand
+      const expandBtn = document.getElementById('expandBtn');
+      const player = document.getElementById('player');
+      const box = document.getElementById('videoBox');
+      expandBtn.addEventListener('click', async () => {
+        if(!document.fullscreenElement){
+          if(box.requestFullscreen) await box.requestFullscreen();
+          expandBtn.textContent='Réduire';
+        } else {
+          if(document.exitFullscreen) await document.exitFullscreen();
+          expandBtn.textContent='Agrandir';
+        }
+      });
+    }
   </script>
 </body>
 </html>
+
