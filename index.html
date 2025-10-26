@@ -1,269 +1,207 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stream Foot - Simple</title>
-  <style>
-    :root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;--muted:#9aa4ad}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;display:flex;min-height:100vh;align-items:flex-start;justify-content:center;padding:20px}
-    .site{width:100%;max-width:1000px}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .logo{font-weight:800;color:#fff;font-size:20px}
-    .viewer{opacity:0.9}
-    .layout{display:flex;gap:12px}
-    .video-col{flex:1}
-    .panel{background:var(--panel);border:2px solid var(--accent);padding:10px;border-radius:8px}
-    .video-box{position:relative;height:420px;border-radius:6px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
-    video{width:100%;height:100%;object-fit:contain;background:#000}
-    .expand-btn{position:absolute;top:10px;right:10px;background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
-    .note{margin-top:8px;background:var(--accent);padding:8px;border-radius:6px;text-align:center;font-weight:700}
-    .chat-col{width:320px;display:flex;flex-direction:column;gap:10px}
-    .messages{height:360px;overflow:auto;background:#051018;padding:8px;border-radius:6px}
-    .msg{padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)}
-    .msg .nick{font-weight:700}
-    .input-row{display:flex;gap:8px}
-    input[type=text]{flex:1;padding:8px;border-radius:6px;border:none}
-    button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
-    .rules{font-size:13px;opacity:0.9}
-    .small{font-size:13px;opacity:0.8}
-    /* Popup pseudo/reglement */
-    #overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1000}
-    #overlay .box{background:#111;padding:20px;border-radius:8px;width:360px;text-align:center;max-height:90%;overflow:auto}
-    #overlay input[type=text]{width:90%;margin-bottom:10px}
-    #overlay button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#fff;cursor:pointer;margin-top:10px}
-    #overlay .rules-box{background:#111;border:1px solid #c62828;padding:8px;border-radius:6px;text-align:left;max-height:200px;overflow:auto;margin-bottom:10px}
-    #streamLink{display:inline-block;background:#c62828;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:20px}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stream Foot - Simple</title>
+<style>
+:root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;--muted:#9aa4ad}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;display:flex;min-height:100vh;align-items:flex-start;justify-content:center;padding:20px}
+.site{width:100%;max-width:1000px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.logo{font-weight:800;color:#fff;font-size:20px}
+.viewer{opacity:0.9}
+.layout{display:flex;gap:12px}
+.video-col{flex:1}
+.panel{background:var(--panel);border:2px solid var(--accent);padding:10px;border-radius:8px}
+.video-box{position:relative;height:420px;border-radius:6px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.expand-btn{position:absolute;top:10px;right:10px;background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
+.note{margin-top:8px;background:var(--accent);padding:8px;border-radius:6px;text-align:center;font-weight:700}
+.chat-col{width:320px;display:flex;flex-direction:column;gap:10px}
+.messages{height:360px;overflow:auto;background:#051018;padding:8px;border-radius:6px}
+.msg{padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.msg .nick{font-weight:700}
+.input-row{display:flex;gap:8px}
+input[type=text]{flex:1;padding:8px;border-radius:6px;border:none}
+button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
+.rules{font-size:13px;opacity:0.9}
+.small{font-size:13px;opacity:0.8}
+/* Popup pseudo/reglement */
+#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1000}
+#overlay .box{background:#111;padding:20px;border-radius:8px;width:360px;text-align:center;max-height:90%;overflow:auto}
+#overlay input[type=text]{width:90%;margin-bottom:10px}
+#overlay button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#fff;cursor:pointer;margin-top:10px}
+#overlay .rules-box{background:#111;border:1px solid #c62828;padding:8px;border-radius:6px;text-align:left;max-height:200px;overflow:auto;margin-bottom:10px}
+#streamLink{display:inline-block;background:#c62828;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:20px}
 
-    /* Notifications toast */
-    #notifications { position: fixed; top: 20px; right: 20px; width: 250px; z-index: 9999; }
-    .toast { background: #c62828; color: #fff; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; opacity: 0.9; animation: slideIn 0.5s, fadeOut 0.5s 3s forwards; }
-    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-    @keyframes fadeOut { to { opacity:0; transform: translateX(100%); } }
-  </style>
+/* Notifications toast persistantes */
+#notifications { position: fixed; top: 20px; right: 20px; width: 250px; z-index: 9999; }
+.toast { background: #c62828; color: #fff; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; opacity: 0.95; display: flex; justify-content: space-between; align-items: center; }
+.toast button.close { background: transparent; border: none; color: #fff; font-weight: bold; cursor: pointer; font-size: 16px; }
+</style>
 </head>
 <body>
-  <div id="overlay">
-    <div class="box">
-      <h3>Bienvenue sur Stream Foot ⚽️</h3>
-      <p>Entrez votre pseudo :</p>
-      <input id="userNick" type="text" placeholder="Pseudo" />
+<div id="overlay">
+  <div class="box">
+    <h3>Bienvenue sur Stream Foot ⚽️</h3>
+    <p>Entrez votre pseudo :</p>
+    <input id="userNick" type="text" placeholder="Pseudo" />
 
-      <div class="rules-box">
-        <strong>🚨⚽️ Règlement – Stream Foot ⚽️🚨</strong>
-        <p>Bienvenue sur Stream Foot, communauté bénévole dédiée à la diffusion de matchs de football. Merci de lire et respecter ce règlement 👇</p>
-        <ul>
-          <li>🔰 <strong>Principes</strong>
-            <ul>
-              <li>Nous agissons bénévolement : le staff n’est pas toujours disponible, merci de votre patience.</li>
-              <li>Le but est de partager la passion du foot dans le respect et la bonne humeur.</li>
-            </ul>
-          </li>
-          <li>👥 <strong>Respect</strong>
-            <ul>
-              <li>Aucune insulte, provocation ou discrimination ne sera tolérée.</li>
-              <li>Pas de spam, pub, arnaque ou vente.</li>
-              <li>Les décisions du staff doivent être respectées.</li>
-            </ul>
-          </li>
-          <li>🎥 <strong>Diffusion</strong>
-            <ul>
-              <li>Les diffuseurs doivent avoir une bonne qualité d’image, de son et de connexion.</li>
-              <li>Les plannings peuvent varier selon la disponibilité des bénévoles.</li>
-              <li>Pour devenir diffuseur, contactez le staff.</li>
-            </ul>
-          </li>
-          <li>💬 <strong>Entraide</strong>
-            <ul>
-              <li>Merci d’aider les autres et de garder une attitude positive et respectueuse.</li>
-            </ul>
-          </li>
-          <li>⚠️ <strong>Sanctions</strong>
-            <ul>
-              <li>Tout manquement peut entraîner avertissement, expulsion ou bannissement.</li>
-            </ul>
-          </li>
-        </ul>
-        <p>Merci à tous pour votre respect, patience et passion du football ❤️⚽</p>
-      </div>
-
-      <p><input type="checkbox" id="acceptRules" /> J'ai lu et j'accepte le règlement</p>
-      <button id="startBtn" disabled>Entrer</button>
+    <div class="rules-box">
+      <strong>🚨⚽️ Règlement – Stream Foot ⚽️🚨</strong>
+      <p>Merci de lire et respecter ce règlement 👇</p>
+      <ul>
+        <li>🔰 Principes : respect et passion du foot</li>
+        <li>👥 Respect : pas d'insulte, spam ou discrimination</li>
+        <li>🎥 Diffusion : qualité et disponibilité</li>
+        <li>💬 Entraide : attitude positive</li>
+        <li>⚠️ Sanctions : avertissement, expulsion ou bannissement</li>
+      </ul>
     </div>
+
+    <p><input type="checkbox" id="acceptRules" /> J'ai lu et j'accepte le règlement</p>
+    <button id="startBtn" disabled>Entrer</button>
   </div>
+</div>
 
-  <div class="site" style="display:none">
-    <header>
-      <div class="logo">Stream Foot - Simple</div>
-      <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
-    </header>
+<div class="site" style="display:none">
+  <header>
+    <div class="logo">Stream Foot - Simple</div>
+    <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
+  </header>
 
-    <div class="layout">
-      <div class="video-col">
-        <div class="panel">
-          <div class="video-box" id="videoBox">
-            <video id="player" controls playsinline preload="metadata" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
-            <button id="expandBtn" class="expand-btn">Agrandir</button>
-          </div>
-          <div class="note">Flux unique — agrandissez la vidéo</div>
+  <div class="layout">
+    <div class="video-col">
+      <div class="panel">
+        <div class="video-box" id="videoBox">
+          <video id="player" controls playsinline preload="metadata" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
+          <button id="expandBtn" class="expand-btn">Agrandir</button>
         </div>
-      </div>
-
-      <div class="chat-col">
-        <div class="panel" style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Chat</strong>
-          </div>
-
-          <div id="messages" class="messages" aria-live="polite"></div>
-
-          <form id="chatForm" class="input-row" onsubmit="return false;">
-            <input id="msg" type="text" placeholder="Message..." />
-            <button id="sendBtn" class="send">Envoyer</button>
-          </form>
-        </div>
+        <div class="note">Flux unique — agrandissez la vidéo</div>
       </div>
     </div>
 
-    <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
+    <div class="chat-col">
+      <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><strong>Chat</strong></div>
+        <div id="messages" class="messages" aria-live="polite"></div>
+        <form id="chatForm" class="input-row" onsubmit="return false;">
+          <input id="msg" type="text" placeholder="Message..." />
+          <button id="sendBtn" class="send">Envoyer</button>
+        </form>
+      </div>
+    </div>
   </div>
 
-  <!-- Notifications container -->
-  <div id="notifications"></div>
+  <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
+</div>
 
-  <script>
-    const BAN_WORDS = ['putain','con','salope','nique','connard'];
-    function censor(text){
-      let out = text;
-      BAN_WORDS.forEach(w => {
-        const re = new RegExp(w, 'ig');
-        out = out.replace(re, m => '*'.repeat(m.length));
-      });
-      return out;
-    }
+<!-- Notifications container -->
+<div id="notifications"></div>
 
-    const overlay = document.getElementById('overlay');
-    const startBtn = document.getElementById('startBtn');
-    const userNickInput = document.getElementById('userNick');
-    const acceptRules = document.getElementById('acceptRules');
-    const site = document.querySelector('.site');
-    const notifications = document.getElementById('notifications');
+<script>
+const BAN_WORDS = ['putain','con','salope','nique','connard'];
+function censor(text){let out=text;BAN_WORDS.forEach(w=>{out=out.replace(new RegExp(w,'ig'), m=>'*'.repeat(m.length));});return out;}
 
-    function showToast(message){
-      const div = document.createElement('div');
-      div.className = 'toast';
-      div.textContent = message;
-      notifications.appendChild(div);
-      setTimeout(()=>{ div.remove(); }, 3500);
-    }
+const overlay=document.getElementById('overlay');
+const startBtn=document.getElementById('startBtn');
+const userNickInput=document.getElementById('userNick');
+const acceptRules=document.getElementById('acceptRules');
+const site=document.querySelector('.site');
+const notifications=document.getElementById('notifications');
 
-    function userJoined(nick){
-      showToast(`${nick} a rejoint le flux ⚽️`);
-    }
+function showToast(message){
+  const div=document.createElement('div');
+  div.className='toast';
+  div.innerHTML=`<span>${message}</span> <button class="close">&times;</button>`;
+  div.querySelector('.close').addEventListener('click',()=>{div.remove();});
+  notifications.appendChild(div);
+}
 
-    acceptRules.addEventListener('change', ()=>{
-      startBtn.disabled = !acceptRules.checked;
+function userJoined(nick){showToast(`${nick} a rejoint le flux ⚽️`);}
+function newLive(title){showToast(`🔔 Nouveau live: ${title} est en ligne !`);}
+
+acceptRules.addEventListener('change', ()=>{startBtn.disabled=!acceptRules.checked;});
+
+startBtn.addEventListener('click', ()=>{
+  const nick=userNickInput.value.trim()||'Anonyme';
+  localStorage.setItem('sf_nick',nick);
+  overlay.style.display='none';
+
+  // Lien vers flux
+  const linkPanel=document.createElement('div');
+  linkPanel.style.textAlign='center'; linkPanel.style.marginTop='50px';
+  linkPanel.innerHTML=`<h2>Bienvenue ${escapeHtml(nick)} ⚽️</h2>
+    <p>Cliquez ci-dessous pour accéder au flux en direct :</p>
+    <a href="#" id="streamLink">Accéder au flux en direct ⚽️</a>`;
+  document.body.appendChild(linkPanel);
+
+  document.getElementById('streamLink').addEventListener('click', e=>{
+    e.preventDefault();
+    userJoined(nick);
+    site.style.display='block';
+    linkPanel.remove();
+    initChat();
+    // Notification live pour tous abonnés (ici simulée pour utilisateur)
+    newLive("Stream Foot ⚽️");
+  });
+});
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));}
+
+function initChat(){
+  const messagesEl=document.getElementById('messages');
+  const msgInput=document.getElementById('msg');
+  const sendBtn=document.getElementById('sendBtn');
+  const chatKey='sf_chat';
+  const lastResetKey='sf_last_reset';
+  const now=Date.now();
+  const lastReset=Number(localStorage.getItem(lastResetKey)||0);
+  if(now-lastReset>2*60*60*1000){localStorage.setItem(chatKey,JSON.stringify([]));localStorage.setItem(lastResetKey,now);}
+  let chat=JSON.parse(localStorage.getItem(chatKey)||'[]');
+
+  function render(){
+    messagesEl.innerHTML='';
+    chat.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='msg';
+      div.innerHTML=`<div class="nick">${escapeHtml(m.nick)} <span style="font-weight:400;color:#9aa4ad;font-size:12px">· ${new Date(m.ts).toLocaleTimeString()}</span></div><div class="text">${escapeHtml(m.text)}</div>`;
+      messagesEl.appendChild(div);
     });
+    messagesEl.scrollTop=messagesEl.scrollHeight;
+  }
 
-    startBtn.addEventListener('click', ()=>{
-      const nick = userNickInput.value.trim() || 'Anonyme';
-      localStorage.setItem('sf_nick', nick);
+  render();
 
-      overlay.style.display = 'none';
+  let lastMsgTs=Number(localStorage.getItem('sf_last_msg')||0);
+  sendBtn.addEventListener('click',()=>{
+    const now=Date.now();
+    if(now-lastMsgTs<10000){alert('Veuillez attendre 10 secondes entre chaque message.');return;}
+    const text=msgInput.value.trim(); if(!text) return;
+    const nick=localStorage.getItem('sf_nick')||'Anonyme';
+    const cens=censor(text);
+    const m={nick,text:cens,ts:now};
+    chat.push(m);
+    localStorage.setItem(chatKey,JSON.stringify(chat));
+    localStorage.setItem('sf_last_msg',now);
+    lastMsgTs=now;
+    msgInput.value=''; render();
+  });
 
-      // Affiche le lien vers le flux
-      const linkPanel = document.createElement('div');
-      linkPanel.style.textAlign='center';
-      linkPanel.style.marginTop='50px';
-      linkPanel.innerHTML = `
-        <h2>Bienvenue ${escapeHtml(nick)} ⚽️</h2>
-        <p>Cliquez ci-dessous pour accéder au flux en direct :</p>
-        <a href="#" id="streamLink">Accéder au flux en direct ⚽️</a>
-      `;
-      document.body.appendChild(linkPanel);
+  const viewerCountEl=document.getElementById('viewerCount');
+  let viewers=Number(sessionStorage.getItem('sf_viewers')||0);
+  viewers++; sessionStorage.setItem('sf_viewers',viewers);
+  viewerCountEl.textContent=viewers;
 
-      document.getElementById('streamLink').addEventListener('click', e=>{
-        e.preventDefault();
-        userJoined(nick); // notification défilante
-        site.style.display='block';
-        linkPanel.remove();
-        initChat();
-      });
-    });
-
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
-    }
-
-    function initChat(){
-      const messagesEl = document.getElementById('messages');
-      const msgInput = document.getElementById('msg');
-      const sendBtn = document.getElementById('sendBtn');
-
-      const chatKey = 'sf_chat';
-      const lastResetKey = 'sf_last_reset';
-      const now = Date.now();
-      const lastReset = Number(localStorage.getItem(lastResetKey)||0);
-      if(now - lastReset > 2*60*60*1000){
-        localStorage.setItem(chatKey, JSON.stringify([]));
-        localStorage.setItem(lastResetKey, now);
-      }
-
-      let chat = JSON.parse(localStorage.getItem(chatKey)||'[]');
-
-      function render(){
-        messagesEl.innerHTML='';
-        chat.forEach(m=>{
-          const div = document.createElement('div');
-          div.className='msg';
-          div.innerHTML='<div class="nick">'+escapeHtml(m.nick)+' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts).toLocaleTimeString()+'</span></div><div class="text">'+escapeHtml(m.text)+'</div>';
-          messagesEl.appendChild(div);
-        });
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-      }
-
-      render();
-
-      let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
-
-      sendBtn.addEventListener('click', ()=>{
-        const now = Date.now();
-        if(now - lastMsgTs < 10000){
-          alert('Veuillez attendre 10 secondes entre chaque message.');
-          return;
-        }
-        const text = msgInput.value.trim();
-        if(!text) return;
-        const nick = localStorage.getItem('sf_nick')||'Anonyme';
-        const cens = censor(text);
-        const m={nick,text:cens,ts:now};
-        chat.push(m);
-        localStorage.setItem(chatKey, JSON.stringify(chat));
-        localStorage.setItem('sf_last_msg', now);
-        lastMsgTs=now;
-        msgInput.value='';
-        render();
-      });
-
-      const viewerCountEl = document.getElementById('viewerCount');
-      let viewers = Number(sessionStorage.getItem('sf_viewers')||0);
-      viewers++;
-      sessionStorage.setItem('sf_viewers', viewers);
-      viewerCountEl.textContent = viewers;
-
-      const expandBtn = document.getElementById('expandBtn');
-      const box = document.getElementById('videoBox');
-      expandBtn.addEventListener('click', async ()=>{
-        if(!document.fullscreenElement){
-          if(box.requestFullscreen) await box.requestFullscreen();
-          expandBtn.textContent='Réduire';
-        } else {
-          if(document.exitFullscreen) await document.exitFullscreen();
-          expandBtn.textContent='Agrandir';
-        }
-      });
-    }
-  </script>
+  const expandBtn=document.getElementById('expandBtn');
+  const box=document.getElementById('videoBox');
+  expandBtn.addEventListener('click',async ()=>{
+    if(!document.fullscreenElement){if(box.requestFullscreen) await box.requestFullscreen(); expandBtn.textContent='Réduire';}
+    else{if(document.exitFullscreen) await document.exitFullscreen(); expandBtn.textContent='Agrandir';}
+  });
+}
+</script>
 </body>
 </html>
 
