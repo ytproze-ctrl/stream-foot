@@ -1,253 +1,248 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stream Foot - Simple</title>
-  <style>
-    :root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;--muted:#9aa4ad}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;display:flex;min-height:100vh;align-items:flex-start;justify-content:center;padding:20px}
-    .site{width:100%;max-width:1000px}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .logo{font-weight:800;color:#fff;font-size:20px}
-    .viewer{opacity:0.9}
-    .layout{display:flex;gap:12px}
-    .video-col{flex:1}
-    .panel{background:var(--panel);border:2px solid var(--accent);padding:10px;border-radius:8px}
-    .video-box{position:relative;height:420px;border-radius:6px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
-    video{width:100%;height:100%;object-fit:contain;background:#000}
-    .expand-btn{position:absolute;top:10px;right:10px;background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;z-index:10}
-    .note{margin-top:8px;background:var(--accent);padding:8px;border-radius:6px;text-align:center;font-weight:700}
-    .chat-col{width:320px;display:flex;flex-direction:column;gap:10px}
-    .messages{height:360px;overflow:auto;background:#051018;padding:8px;border-radius:6px}
-    .msg{padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)}
-    .msg .nick{font-weight:700}
-    .input-row{display:flex;gap:8px}
-    input[type=text]{flex:1;padding:8px;border-radius:6px;border:none}
-    button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
-    .rules{font-size:13px;opacity:0.9}
-    .small{font-size:13px;opacity:0.8}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stream Foot - Simple</title>
+<style>
+:root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;--muted:#9aa4ad}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;display:flex;min-height:100vh;align-items:flex-start;justify-content:center;padding:20px}
+.site{width:100%;max-width:1000px;pointer-events:none;opacity:0.01} /* désactivé tant que login non fait */
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.logo{font-weight:800;color:#fff;font-size:20px}
+.viewer{opacity:0.9}
+.layout{display:flex;gap:12px}
+.video-col{flex:1}
+.panel{background:var(--panel);border:2px solid var(--accent);padding:10px;border-radius:8px}
+.video-box{position:relative;height:420px;border-radius:6px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.expand-btn{position:absolute;top:10px;right:10px;background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer;z-index:10}
+.note{margin-top:8px;background:var(--accent);padding:8px;border-radius:6px;text-align:center;font-weight:700}
+.chat-col{width:320px;display:flex;flex-direction:column;gap:10px}
+.messages{height:360px;overflow:auto;background:#051018;padding:8px;border-radius:6px}
+.msg{padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.msg .nick{font-weight:700}
+.input-row{display:flex;gap:8px}
+input[type=text]{flex:1;padding:8px;border-radius:6px;border:none}
+button.send{background:var(--accent);border:none;padding:8px 10px;border-radius:6px;color:#fff;cursor:pointer}
+.rules{font-size:13px;opacity:0.9}
+.small{font-size:13px;opacity:0.8}
 
-    /* Login Discord */
-    #loginContainer{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      height:100vh;
-      width:100%;
-      background:var(--bg);
-      position:fixed;
-      top:0;
-      left:0;
-      z-index:9999;
-    }
-    #loginContainer h2{margin-bottom:12px;font-weight:700;}
-    #discordLoginBtn{
-      padding:10px 20px;
-      border:none;
-      border-radius:6px;
-      background:var(--accent);
-      color:#fff;
-      cursor:pointer;
-      font-weight:700;
-      margin-top:10px;
-      z-index:10000;
-    }
-  </style>
+/* Login Discord */
+#loginContainer{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  width:100%;
+  position:fixed;
+  top:0;
+  left:0;
+  background:var(--bg);
+  z-index:99999;
+}
+#loginContainer h2{margin-bottom:12px;font-weight:700;}
+#discordLoginBtn{
+  padding:10px 20px;
+  border:none;
+  border-radius:6px;
+  background:var(--accent);
+  color:#fff;
+  cursor:pointer;
+  font-weight:700;
+  margin-top:10px;
+  z-index:100000;
+}
+</style>
 </head>
 <body>
-  <!-- Login Discord -->
-  <div id="loginContainer">
-    <h2>Connectez-vous avec Discord pour accéder au chat</h2>
-    <button id="discordLoginBtn">Se connecter avec Discord</button>
-  </div>
 
-  <div class="site">
-    <header>
-      <div class="logo">Stream Foot - Simple</div>
-      <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
-    </header>
+<!-- Login Discord -->
+<div id="loginContainer">
+  <h2>Connectez-vous avec Discord pour accéder au chat</h2>
+  <button id="discordLoginBtn">Se connecter avec Discord</button>
+</div>
 
-    <div class="layout">
-      <div class="video-col">
-        <div class="panel">
-          <div class="video-box" id="videoBox">
-            <video id="player" controls playsinline preload="metadata" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
-            <button id="expandBtn" class="expand-btn">Agrandir</button>
-          </div>
-          <div class="note">Flux unique — agrandissez la vidéo</div>
+<div class="site">
+  <header>
+    <div class="logo">Stream Foot - Simple</div>
+    <div class="viewer small">Spectateurs: <span id="viewerCount">0</span></div>
+  </header>
+
+  <div class="layout">
+    <div class="video-col">
+      <div class="panel">
+        <div class="video-box" id="videoBox">
+          <video id="player" controls playsinline preload="metadata" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
+          <button id="expandBtn" class="expand-btn">Agrandir</button>
         </div>
-      </div>
-
-      <div class="chat-col">
-        <div class="panel" style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Chat</strong>
-            <span class="small">Modos: <span id="modCount">0</span></span>
-          </div>
-
-          <div id="messages" class="messages" aria-live="polite"></div>
-
-          <form id="chatForm" class="input-row" onsubmit="return false;">
-            <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" />
-            <input id="msg" type="text" placeholder="Message..." />
-            <button id="sendBtn" class="send">Envoyer</button>
-          </form>
-
-          <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
-            <div style="font-weight:700;margin-bottom:6px">Règlement</div>
-            <ol>
-              <li>Pas d'insultes (mots remplacés par des étoiles)</li>
-              <li>10s entre chaque message</li>
-              <li>Respectez les autres</li>
-            </ol>
-          </div>
-        </div>
+        <div class="note">Flux unique — agrandissez la vidéo</div>
       </div>
     </div>
 
-    <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
+    <div class="chat-col">
+      <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Chat</strong>
+          <span class="small">Modos: <span id="modCount">0</span></span>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="chatForm" class="input-row" onsubmit="return false;">
+          <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" />
+          <input id="msg" type="text" placeholder="Message..." />
+          <button id="sendBtn" class="send">Envoyer</button>
+        </form>
+
+        <div class="rules panel" style="background:transparent;border-color:rgba(255,255,255,0.04)">
+          <div style="font-weight:700;margin-bottom:6px">Règlement</div>
+          <ol>
+            <li>Pas d'insultes (mots remplacés par des étoiles)</li>
+            <li>10s entre chaque message</li>
+            <li>Respectez les autres</li>
+          </ol>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <footer style="margin-top:12px;text-align:center;opacity:0.8">Stream Foot - Simple</footer>
+</div>
 
-  <script>
-    // ---------- CONFIGURATION ----------
-    const firebaseConfig = {
-      apiKey: "VOTRE_APIKEY",
-      authDomain: "VOTRE_AUTHDOMAIN",
-      databaseURL: "VOTRE_DATABASE_URL",
-      projectId: "VOTRE_PROJECTID",
-      storageBucket: "VOTRE_STORAGEBUCKET",
-      messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-      appId: "VOTRE_APPID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    // ---------- UTIL ----------
-    const BAN_WORDS = ['putain','con','salope','nique','connard'];
-    function censor(text){
-      let out = text;
-      BAN_WORDS.forEach(w => { const re = new RegExp(w,'ig'); out=out.replace(re,m=>'*'.repeat(m.length)); });
-      return out;
-    }
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
+<script>
+const firebaseConfig = {
+  apiKey: "VOTRE_APIKEY",
+  authDomain: "VOTRE_AUTHDOMAIN",
+  databaseURL: "VOTRE_DATABASE_URL",
+  projectId: "VOTRE_PROJECTID",
+  storageBucket: "VOTRE_STORAGEBUCKET",
+  messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
+  appId: "VOTRE_APPID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    // ---------- DOM ----------
-    const messagesEl = document.getElementById('messages');
-    const sendBtn = document.getElementById('sendBtn');
-    const msgInput = document.getElementById('msg');
-    const nickInput = document.getElementById('nick');
-    const viewerCountEl = document.getElementById('viewerCount');
-    const modCountEl = document.getElementById('modCount');
+// Utilitaires
+const BAN_WORDS=['putain','con','salope','nique','connard'];
+function censor(text){let out=text;BAN_WORDS.forEach(w=>{const re=new RegExp(w,'ig');out=out.replace(re,m=>'*'.repeat(m.length));});return out;}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));}
 
-    // ---------- PRESENCE ----------
-    const uid = 'u_'+Math.random().toString(36).slice(2,9);
-    const presenceRef = db.ref('presence/' + uid);
+// DOM
+const messagesEl=document.getElementById('messages');
+const sendBtn=document.getElementById('sendBtn');
+const msgInput=document.getElementById('msg');
+const nickInput=document.getElementById('nick');
+const viewerCountEl=document.getElementById('viewerCount');
+const modCountEl=document.getElementById('modCount');
 
-    // ---------- AUTHENTIFICATION DISCORD ----------
-    const discordLoginBtn = document.getElementById('discordLoginBtn');
-    discordLoginBtn.addEventListener('click', ()=>{
-      const clientId = 'VOTRE_CLIENT_ID';
-      const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-      const scope = encodeURIComponent('identify');
-      window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+// Presence
+const uid='u_'+Math.random().toString(36).slice(2,9);
+const presenceRef=db.ref('presence/'+uid);
+
+// Discord Auth
+const discordLoginBtn=document.getElementById('discordLoginBtn');
+discordLoginBtn.addEventListener('click',()=>{
+  const clientId='VOTRE_CLIENT_ID';
+  const redirectUri=encodeURIComponent(window.location.origin+window.location.pathname);
+  const scope=encodeURIComponent('identify');
+  window.location.href=`https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+});
+
+function getDiscordToken(){
+  const hash=window.location.hash.substring(1);
+  const params=new URLSearchParams(hash);
+  return params.get('access_token');
+}
+
+async function fetchDiscordUser(token){
+  const res=await fetch('https://discord.com/api/users/@me',{headers:{Authorization:'Bearer '+token}});
+  return res.json();
+}
+
+(async ()=>{
+  const token=getDiscordToken();
+  if(token){
+    const user=await fetchDiscordUser(token);
+    nickInput.value=user.username;
+
+    // Afficher site
+    document.getElementById('loginContainer').style.display='none';
+    const siteEl=document.querySelector('.site');
+    siteEl.style.pointerEvents='auto';
+    siteEl.style.opacity='1';
+
+    // Presence
+    presenceRef.set({nick:user.username,ts:Date.now()});
+    presenceRef.onDisconnect().remove();
+
+    // Viewers
+    db.ref('presence').on('value',snap=>{const v=snap.val()||{};viewerCountEl.textContent=Object.keys(v).length;});
+
+    // Messages
+    db.ref('messages').limitToLast(200).on('value',snap=>{
+      const v=snap.val()||{};
+      messagesEl.innerHTML='';
+      Object.keys(v).sort((a,b)=>(v[a].ts||0)-(v[b].ts||0)).forEach(key=>{
+        const m=v[key];
+        const div=document.createElement('div');
+        div.className='msg';
+        div.innerHTML='<div class="nick">'+escapeHtml(m.nick||'Anonyme')+
+          ' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div>'+
+          '<div class="text">'+escapeHtml(m.text||'')+'</div>';
+        messagesEl.appendChild(div);
+      });
+      messagesEl.scrollTop=messagesEl.scrollHeight;
     });
 
-    function getDiscordToken(){
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      return params.get('access_token');
-    }
+    // Moderators
+    db.ref('moderators').on('value',snap=>{const v=snap.val()||{};modCountEl.textContent=Object.keys(v).length;});
 
-    async function fetchDiscordUser(token){
-      const res = await fetch('https://discord.com/api/users/@me',{ headers:{Authorization:'Bearer '+token}});
-      return res.json();
-    }
-
-    (async ()=>{
-      const token = getDiscordToken();
-      if(token){
-        const user = await fetchDiscordUser(token);
-        nickInput.value = user.username;
-        document.getElementById('loginContainer').style.display='none';
-        document.querySelector('.site').style.display='block';
-
-        // mettre à jour présence
-        presenceRef.set({nick:user.username, ts:Date.now()});
-        presenceRef.onDisconnect().remove();
-
-        // viewers
-        db.ref('presence').on('value', snap=>{
-          const v = snap.val()||{};
-          viewerCountEl.textContent = Object.keys(v).length;
-        });
-
-        // load messages
-        db.ref('messages').limitToLast(200).on('value', snap=>{
-          const v = snap.val()||{};
-          messagesEl.innerHTML='';
-          Object.keys(v).sort((a,b)=>(v[a].ts||0)-(v[b].ts||0)).forEach(key=>{
-            const m=v[key];
-            const div=document.createElement('div');
-            div.className='msg';
-            div.innerHTML='<div class="nick">'+escapeHtml(m.nick||'Anonyme')+
-              ' <span style="font-weight:400;color:#9aa4ad;font-size:12px">· '+new Date(m.ts||0).toLocaleTimeString()+'</span></div>'+
-              '<div class="text">'+escapeHtml(m.text||'')+'</div>';
-            messagesEl.appendChild(div);
-          });
-          messagesEl.scrollTop = messagesEl.scrollHeight;
-        });
-
-        // moderators count
-        db.ref('moderators').on('value', snap=>{
-          const v=snap.val()||{};
-          modCountEl.textContent = Object.keys(v).length;
-        });
-
-        // send messages
-        let lastMsgTs = Number(localStorage.getItem('sf_last_msg')||0);
-        sendBtn.addEventListener('click', async ()=>{
-          const now=Date.now();
-          if(now-lastMsgTs<10000){alert('Veuillez attendre 10 secondes entre chaque message.'); return;}
-          const nick=nickInput.value.trim()||'Anonyme';
-          const text=msgInput.value.trim();
-          if(!text) return;
-          const cens=censor(text);
-          await db.ref('messages').push({nick,text:cens,ts:Date.now()});
-          lastMsgTs=Date.now();
-          localStorage.setItem('sf_last_msg',String(lastMsgTs));
-          msgInput.value='';
-        });
-
-        nickInput.addEventListener('change', ()=>{
-          presenceRef.set({nick:nickInput.value||'Anonyme',ts:Date.now()});
-        });
-
-      } else {
-        document.querySelector('.site').style.display='none';
-      }
-    })();
-
-    // video expand
-    const expandBtn = document.getElementById('expandBtn');
-    const player = document.getElementById('player');
-    expandBtn.addEventListener('click', async ()=>{
-      const box=document.getElementById('videoBox');
-      if(!document.fullscreenElement){
-        if(box.requestFullscreen) await box.requestFullscreen();
-        else if(box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
-        expandBtn.textContent='Réduire';
-      } else {
-        if(document.exitFullscreen) await document.exitFullscreen();
-        expandBtn.textContent='Agrandir';
-      }
+    // Send messages
+    let lastMsgTs=Number(localStorage.getItem('sf_last_msg')||0);
+    sendBtn.addEventListener('click',async ()=>{
+      const now=Date.now();
+      if(now-lastMsgTs<10000){alert('Veuillez attendre 10 secondes entre chaque message.');return;}
+      const nick=nickInput.value.trim()||'Anonyme';
+      const text=msgInput.value.trim();
+      if(!text) return;
+      const cens=censor(text);
+      await db.ref('messages').push({nick,text:cens,ts:Date.now()});
+      lastMsgTs=Date.now();
+      localStorage.setItem('sf_last_msg',String(lastMsgTs));
+      msgInput.value='';
     });
-  </script>
+
+    nickInput.addEventListener('change',()=>{presenceRef.set({nick:nickInput.value||'Anonyme',ts:Date.now()});});
+
+  } else {
+    document.querySelector('.site').style.pointerEvents='none';
+    document.querySelector('.site').style.opacity='0.01';
+  }
+})();
+
+// Video expand
+const expandBtn=document.getElementById('expandBtn');
+const player=document.getElementById('player');
+expandBtn.addEventListener('click',async ()=>{
+  const box=document.getElementById('videoBox');
+  if(!document.fullscreenElement){
+    if(box.requestFullscreen) await box.requestFullscreen();
+    else if(box.webkitRequestFullscreen) await box.webkitRequestFullscreen();
+    expandBtn.textContent='Réduire';
+  } else {
+    if(document.exitFullscreen) await document.exitFullscreen();
+    expandBtn.textContent='Agrandir';
+  }
+});
+</script>
+
 </body>
 </html>
+
 
