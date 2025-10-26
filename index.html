@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stream Foot - Pseudo Discord Local</title>
+<title>Stream Foot - Pseudo et règlement</title>
 <style>
 :root{--bg:#0f1720;--panel:#0b0f14;--accent:#c62828;}
 body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#fff;display:flex;flex-direction:column;align-items:center;padding:20px;}
@@ -30,15 +30,17 @@ button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;bord
 #userInfo{margin-bottom:8px;font-size:14px;}
 #loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
 #loginOverlay input{padding:10px;border-radius:6px;border:none;margin-bottom:10px;width:200px;}
+#loginOverlay label{display:flex;align-items:center;gap:5px;margin-bottom:10px;}
 #loginOverlay button{padding:10px 20px;border-radius:6px;border:none;background:#c62828;color:#fff;cursor:pointer;}
 </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-  <h2>Connectez-vous</h2>
+  <h2>Connectez-vous et acceptez le règlement</h2>
   <input type="text" id="pseudoInput" placeholder="Pseudo Discord" maxlength="24">
-  <button id="loginBtn">Se connecter</button>
+  <label><input type="checkbox" id="agreeRules"> J’accepte le règlement</label>
+  <button id="loginBtn">Continuer</button>
 </div>
 
 <div class="site" style="display:none;">
@@ -91,17 +93,23 @@ button.send, #sendBtn{background:var(--accent);border:none;padding:8px 10px;bord
 </div>
 
 <script>
-// Login local
+// Login local avec règlement
 const loginOverlay = document.getElementById('loginOverlay');
 const loginBtn = document.getElementById('loginBtn');
 const pseudoInput = document.getElementById('pseudoInput');
+const agreeRules = document.getElementById('agreeRules');
 const siteDiv = document.querySelector('.site');
 const userInfo = document.getElementById('userInfo');
 const nickInput = document.getElementById('nick');
 
 loginBtn.addEventListener('click', ()=>{
   const pseudo = pseudoInput.value.trim() || 'Anonyme';
+  if(!agreeRules.checked){
+    alert("Vous devez accepter le règlement pour continuer !");
+    return;
+  }
   localStorage.setItem('pseudoDiscord', pseudo);
+  localStorage.setItem('rulesAccepted','true');
   initSite(pseudo);
 });
 
@@ -113,9 +121,10 @@ function initSite(pseudo){
   startViewers();
 }
 
-// Vérifier si pseudo déjà stocké
+// Vérifier si pseudo déjà stocké et règlement accepté
 const storedPseudo = localStorage.getItem('pseudoDiscord');
-if(storedPseudo) initSite(storedPseudo);
+const rulesAccepted = localStorage.getItem('rulesAccepted');
+if(storedPseudo && rulesAccepted==='true') initSite(storedPseudo);
 
 // Chat local
 const messagesEl = document.getElementById('messages');
