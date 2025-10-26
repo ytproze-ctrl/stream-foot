@@ -198,11 +198,7 @@
       presenceRef.set({nick: nickInput.value||'Anonyme', ts: Date.now()});
     });
 
-  </script>
-</body>
-</html>
-
-// load messages
+    // load messages
 const msgsRef = db.ref('messages');
 msgsRef.limitToLast(200).on('value', snap => {
   const v = snap.val() || {};
@@ -242,4 +238,10 @@ msgInput.addEventListener('keypress', e => {
     sendMessage();
   }
 });
+
+  </script>
+</body>
+</html>
+
+
 
