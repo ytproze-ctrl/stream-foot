@@ -64,65 +64,70 @@
 
 
        <script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Chat en direct</title>
+<style>
+  #chatBox { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px; background: #f9f9f9;}
+  #chatBox li { padding: 5px; border-bottom: 1px solid #ddd; cursor: pointer;}
+</style>
+</head>
+<body>
+
+<ul id="chatBox"></ul>
+
+<form id="chatForm" class="input-row" onsubmit="return false;">
+  <input id="nick" type="text" placeholder="Pseudo" value="Anonyme" />
+  <input id="msg" type="text" placeholder="Message..." />
+  <button id="sendBtn" class="send">Envoyer</button>
+</form>
+
+<script>
 // Récupération des éléments
 const sendBtn = document.getElementById('sendBtn');
 const nickInput = document.getElementById('nick');
 const msgInput = document.getElementById('msg');
-const chatForm = document.getElementById('chatForm');
+const chatBox = document.getElementById('chatBox');
+
+// Fonction pour afficher un message dans le chat
+function addMessage(nick, msg) {
+  const li = document.createElement('li');
+  li.textContent = `${nick}: ${msg}`;
+  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
+  chatBox.appendChild(li);
+  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
+}
 
 // Fonction pour envoyer le message
 function sendMessage() {
   const nick = nickInput.value.trim() || 'Anonyme';
   const msg = msgInput.value.trim();
   if (!msg) return;
-
-  // Ici tu peux envoyer le message via Socket.IO ou l'afficher dans le chat
-  console.log(`${nick}: ${msg}`); // Exemple simple
-  alert(`${nick}: ${msg}`); // Affiche un popup pour tester
-
-  msgInput.value = ''; // Vide le champ message
+  addMessage(nick, msg);
+  msgInput.value = '';
   msgInput.focus();
 }
 
-// Clic sur le bouton "Envoyer"
+// Bouton "Envoyer"
 sendBtn.addEventListener('click', e => {
-  e.preventDefault(); // Empêche le formulaire de recharger la page
+  e.preventDefault();
   sendMessage();
 });
 
-// Envoi avec la touche "Entrée" dans le champ message
+// Touche Entrée
 msgInput.addEventListener('keypress', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     sendMessage();
   }
 });
-         // Fonction pour afficher un message dans le chat
-function addMessage(nick, msg) {
-  const li = document.createElement('li');
-  li.textContent = `${nick}: ${msg}`;
-  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
-  chatBox.appendChild(li);
-  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
-}
+</script>
 
-         // Fonction pour afficher un message dans le chat
-function addMessage(nick, msg) {
-  const li = document.createElement('li');
-  li.textContent = `${nick}: ${msg}`;
-  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
-  chatBox.appendChild(li);
-  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
-}
+</body>
+</html>
 
-         // Fonction pour afficher un message dans le chat
-function addMessage(nick, msg) {
-  const li = document.createElement('li');
-  li.textContent = `${nick}: ${msg}`;
-  li.addEventListener('click', () => alert(`Message cliqué: ${msg}`)); // clic sur le message
-  chatBox.appendChild(li);
-  chatBox.scrollTop = chatBox.scrollHeight; // scroll automatique
-}
          
 </script>
 
